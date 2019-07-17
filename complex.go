@@ -17,11 +17,14 @@ func (c Complex) Modulus() float64 {
 var EPSILON float64 = 0.00000001
 
 func (c Complex) Equals(a Complex) bool {
-
 	if math.Abs(real(c)-real(a)) < EPSILON &&
 		math.Abs(imag(c)-imag(a)) < EPSILON {
 		return true
 	}
 
 	return false
+}
+
+func NearEqual(a, b float64) bool {
+	return math.Abs(a-b) < EPSILON
 }

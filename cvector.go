@@ -1,6 +1,13 @@
 package qrad
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 type CVector struct {
 	Elements []Complex
@@ -22,8 +29,9 @@ func (c *CVector) Set(i int, e Complex) {
 	c.Elements[i] = e
 }
 
-func (c *CVector) Resize(i int) {
+func (c *CVector) Resize(i int) *CVector {
 	c.Elements = make([]Complex, i)
+	return c
 }
 
 func (c CVector) Length() int {
@@ -95,7 +103,17 @@ func (c *CVector) MulMatrix(v CVector, m CMatrix) {
 	}
 }
 
-func (c *CVector) TensorProduct(a, b CVector) {
+func (c *CVector) TensorProduct(a, b CVector) *CVector {
+	if a.Length() == 0 {
+		c.Elements = b.Elements[:]
+		return c
+	}
+
+	if b.Length() == 0 {
+		c.Elements = a.Elements[:]
+		return c
+	}
+
 	c.Resize(a.Length() * b.Length())
 
 	for ah := 0; ah < a.Length(); ah++ {
@@ -105,13 +123,66 @@ func (c *CVector) TensorProduct(a, b CVector) {
 			c.Set(ch, a.At(ah)*b.At(bh))
 		}
 	}
+
+	return c
+}
+
+func (c CVector) CMatrix() *CMatrix {
+	m := NewCMatrix()
+	m.Resize(1, c.Length())
+
+	for i := 0; i < c.Length(); i++ {
+		m.Set(0, i, c.At(i))
+	}
+	return m
+}
+
+func (c CVector) Norm() float64 {
+	// | < p | p > |
+	bra := c.CMatrix().Dagger()
+	key := c.CMatrix()
+
+	innerProduct := bra.MulMatrix(*bra, *key)
+
+	if innerProduct.Width != 1 && innerProduct.Height != 1 {
+		panic("invalid inner product")
+	}
+
+	return innerProduct.At(0, 0).Modulus()
+}
+
+func (c CVector) Probabilities() map[int]float64 {
+	out := make(map[int]float64)
+	norm := c.Norm()
+	for i, e := range c.Elements {
+		out[i] = e.Modulus() * e.Modulus() / norm
+	}
+	return out
 }
 
 func (c *CVector) Measure() int {
+	norm := c.Norm()
+	guess := rand.Float64()
+
 	for i, e := range c.Elements {
-		if e.Modulus() > rand.Float64() {
+		guess -= (e.Modulus() * e.Modulus() / norm)
+		if guess < 0 {
 			return i
 		}
 	}
-	panic("it should of worked")
+	// There's like a super super super super small chance of this happening...
+	panic("the numbers mason, what do they mean?")
+}
+
+func (c CVector) Equals(b CVector) bool {
+	if c.Length() != b.Length() {
+		return false
+	}
+
+	for i := range c.Elements {
+		if !c.At(i).Equals(b.At(i)) {
+			return false
+		}
+	}
+	return true
 }

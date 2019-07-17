@@ -1,7 +1,6 @@
 package qrad
 
 import (
-	"fmt"
 	"math"
 	"testing"
 )
@@ -16,7 +15,7 @@ func TestBellStateConstruction(t *testing.T) {
 	// ---[ H ]
 	// --------
 	operator1 := NewCMatrix()
-	operator1.TensorProduct(*HadmardGate, *IdentityGate)
+	operator1.TensorProduct(*HadamardGate, *IdentityGate)
 
 	state1 := NewCVector()
 	state1.MulMatrix(*state0, *operator1)
@@ -43,7 +42,6 @@ func TestBellStateConstruction(t *testing.T) {
 }
 
 // 1, 0, 2 1
-
 func encodeCharacter(r rune) []int {
 	out := []int{}
 
@@ -81,7 +79,7 @@ func TestQuantumSuperDenseCoding(t *testing.T) {
 		state0.TensorProduct(*NewQubit(0), *NewQubit(0))
 
 		operator1 := NewCMatrix()
-		operator1.TensorProduct(*HadmardGate, *IdentityGate)
+		operator1.TensorProduct(*HadamardGate, *IdentityGate)
 		state1 := NewCVector()
 		state1.MulMatrix(*state0, *operator1)
 
@@ -121,22 +119,67 @@ func TestQuantumSuperDenseCoding(t *testing.T) {
 
 		state4 := NewCVector()
 		operator5 := NewCMatrix()
-		operator5.TensorProduct(*HadmardGate, *IdentityGate)
+		operator5.TensorProduct(*HadamardGate, *IdentityGate)
 
 		state4.MulMatrix(*state3, *operator5)
-		fmt.Println(state4)
 
 		if state4.Measure() != m {
 			t.Error("Failed to encode information")
 		}
 
 		buff = append(buff, m)
+
 		if len(buff) == 4 {
 			out += decodeCharacter(buff)
 			buff = []int{}
-			fmt.Println("Decoded Message: " + out)
 		}
-
 	}
 
+	if out != messageStr {
+		t.Error("Failed to decode message")
+	}
+}
+
+func TestExtendControlGate(t *testing.T) {
+	// ----.----
+	// ----X----
+	cnot2 := ExtendControlGate(0, 1, 2, NotGate)
+
+	if !cnot2.Equals(*CNotGate) {
+		t.Error("Failed to build standard CNOT gate")
+	}
+
+	// ----.----
+	// ----|----
+	// ----X----
+	cnot3 := ExtendControlGate(0, 2, 3, NotGate)
+	cnot3sol := NewCMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
+	})
+
+	if !cnot3.Equals(*cnot3sol) {
+		t.Error("Failed to build extended 3 bit CNOT gate")
+	}
+}
+
+// func TestExtendControlGateSimple(t *testing.T) {
+// 	cnot2 := ExtendControlGate(0, 1, 2, NotGate)
+// }
+
+func TestExtendGate(t *testing.T) {
+	operator1 := NewCMatrix()
+	operator1.TensorProduct(*HadamardGate, *IdentityGate)
+
+	hadamard2 := ExtendGate(0, 2, HadamardGate)
+
+	if !hadamard2.Equals(*operator1) {
+		t.Error("Failed to construct gate")
+	}
 }

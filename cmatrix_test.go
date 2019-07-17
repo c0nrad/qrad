@@ -1,6 +1,7 @@
 package qrad
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -25,11 +26,39 @@ func TestCMatrixTensorProduct(t *testing.T) {
 	g := NewCMatrix()
 	g.TensorProduct(*a, *b)
 
-	for h := 0; h < g.Height; h++ {
-		for w := 0; w < g.Width; w++ {
-			if !s.At(w, h).Equals(g.At(w, h)) {
-				t.Error("Failed to take tensor product")
-			}
-		}
+	if !s.Equals(*g) {
+		t.Error("Failed to take tensor product")
+	}
+
+}
+
+func TestCMatrxAdd(t *testing.T) {
+	sum := NewCMatrix()
+	sum.Resize(1, 2)
+
+	a := NewCMatrixFromElements([][]Complex{
+		[]Complex{complex(5, 0)},
+		[]Complex{complex(0, 10)}})
+
+	sol := NewCMatrixFromElements([][]Complex{
+		[]Complex{complex(15, 0)},
+		[]Complex{complex(0, 30)}})
+
+	if !sum.Add(*sum, *a).Add(*sum, *a).Add(*sum, *a).Equals(*sol) {
+		fmt.Println(sum, sol)
+		t.Error("Failed to self add 3 times")
+	}
+}
+
+func TestCMatrixTranspose(t *testing.T) {
+	a := NewCMatrixFromElements([][]Complex{
+		[]Complex{complex(8, 0)},
+		[]Complex{complex(12, 0)}})
+
+	b := NewCMatrixFromElements([][]Complex{
+		[]Complex{complex(8, 0), complex(12, 0)}})
+
+	if !a.Transpose(*a).Equals(*b) {
+		t.Error("Failed to transpose")
 	}
 }

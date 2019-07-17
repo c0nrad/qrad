@@ -1,6 +1,9 @@
 package qrad
 
-import "fmt"
+import (
+	"fmt"
+	"math/cmplx"
+)
 
 type CMatrix struct {
 	Elements []Complex
@@ -28,10 +31,12 @@ func NewCMatrixFromElements(elements [][]Complex) *CMatrix {
 	return c
 }
 
-func (c *CMatrix) Resize(x, y int) {
+func (c *CMatrix) Resize(x, y int) *CMatrix {
 	c.Elements = make([]Complex, x*y)
 	c.Width = x
 	c.Height = y
+
+	return c
 }
 
 func (c CMatrix) At(x, y int) Complex {
@@ -39,8 +44,9 @@ func (c CMatrix) At(x, y int) Complex {
 	// 4, 5, 6, 7
 
 	if x >= c.Width || y >= c.Height {
-		fmt.Println(c, x, y)
+		fmt.Println(x, c.Width, y, c.Height)
 		panic("Invalid  dimensions")
+
 	}
 	return c.Elements[x+c.Width*y]
 }
@@ -52,7 +58,7 @@ func (c *CMatrix) Set(x, y int, e Complex) {
 	c.Elements[x+c.Width*y] = e
 }
 
-func (c *CMatrix) Add(a, b CMatrix) {
+func (c *CMatrix) Add(a, b CMatrix) *CMatrix {
 	if a.Width != b.Width || a.Height != b.Height {
 		panic("Invalid dimensions")
 	}
@@ -64,9 +70,11 @@ func (c *CMatrix) Add(a, b CMatrix) {
 			c.Set(x, y, a.At(x, y)+b.At(x, y))
 		}
 	}
+
+	return c
 }
 
-func (c *CMatrix) Sub(a, b CMatrix) {
+func (c *CMatrix) Sub(a, b CMatrix) *CMatrix {
 	if a.Width != b.Width || a.Height != b.Height {
 		panic("Invalid dimensions")
 	}
@@ -78,9 +86,11 @@ func (c *CMatrix) Sub(a, b CMatrix) {
 			c.Set(x, y, a.At(x, y)-b.At(x, y))
 		}
 	}
+
+	return c
 }
 
-func (c *CMatrix) MulScalar(a CMatrix, e Complex) {
+func (c *CMatrix) MulScalar(a CMatrix, e Complex) *CMatrix {
 	c.Resize(a.Width, a.Height)
 
 	for x := 0; x < a.Width; x++ {
@@ -88,13 +98,73 @@ func (c *CMatrix) MulScalar(a CMatrix, e Complex) {
 			c.Set(x, y, e*a.At(x, y))
 		}
 	}
+
+	return c
 }
 
-func (c *CMatrix) MulMatrix(a, b CMatrix) {
-	panic("implement me!")
+func (c *CMatrix) Transpose(a CMatrix) *CMatrix {
+	c.Resize(a.Height, a.Width)
+
+	for x := 0; x < a.Width; x++ {
+		for y := 0; y < a.Height; y++ {
+			c.Set(y, x, a.At(x, y))
+		}
+	}
+
+	return c
 }
 
-func (c *CMatrix) TensorProduct(a, b CMatrix) {
+func (c *CMatrix) Conjugate(a CMatrix) *CMatrix {
+	c.Resize(a.Width, a.Height)
+
+	for x := 0; x < a.Width; x++ {
+		for y := 0; y < a.Height; y++ {
+			c.Set(x, y, Complex(cmplx.Conj(complex128(a.At(x, y)))))
+		}
+	}
+
+	return c
+}
+
+func (c *CMatrix) Dagger() *CMatrix {
+	return c.Transpose(*c).Conjugate(*c)
+}
+
+func (c *CMatrix) MulMatrix(a, b CMatrix) *CMatrix {
+	if a.Width != b.Height {
+		fmt.Println(a.Width, b.Height)
+		panic("Invalid dimensions")
+	}
+	c.Resize(b.Width, a.Height)
+
+	for w := 0; w < b.Width; w++ {
+		for h := 0; h < a.Height; h++ {
+			sum := NewComplex(0, 0)
+			for i := 0; i < a.Width; i++ {
+				sum += a.At(i, h) * b.At(w, i)
+			}
+			c.Set(w, h, sum)
+		}
+	}
+	return c
+}
+
+func (c *CMatrix) Clone(a CMatrix) *CMatrix {
+	c.Elements = a.Elements[:]
+	c.Height = a.Height
+	c.Width = a.Width
+	return c
+}
+
+func (c *CMatrix) TensorProduct(a, b CMatrix) *CMatrix {
+	if a.Width == 0 || a.Height == 0 {
+		c.Clone(b)
+		return c
+	} else if b.Width == 0 || b.Height == 0 {
+		c.Clone(a)
+		return c
+	}
+
 	c.Resize(a.Width*b.Width, a.Height*b.Height)
 
 	for aw := 0; aw < a.Width; aw++ {
@@ -109,4 +179,45 @@ func (c *CMatrix) TensorProduct(a, b CMatrix) {
 			}
 		}
 	}
+
+	return c
+}
+
+func (c *CMatrix) TensorProducts(a ...CMatrix) *CMatrix {
+	for _, m := range a {
+		c.TensorProduct(*c, m)
+	}
+
+	return c
+}
+
+func (c CMatrix) Equals(a CMatrix) bool {
+	for h := 0; h < a.Height; h++ {
+		for w := 0; w < a.Width; w++ {
+			if !c.At(w, h).Equals(a.At(w, h)) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (a CMatrix) PPrint() {
+	fmt.Print("[")
+	for h := 0; h < a.Height; h++ {
+		fmt.Print("[")
+
+		if h != 0 {
+			fmt.Print(" ")
+		}
+		for w := 0; w < a.Width; w++ {
+			fmt.Print(a.At(w, h), " ")
+
+		}
+		fmt.Print("]")
+		if h != a.Height-1 {
+			fmt.Println("")
+		}
+	}
+	fmt.Print("]\n")
 }

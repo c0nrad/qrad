@@ -1,6 +1,8 @@
 package qrad
 
 import (
+	"fmt"
+	"math"
 	"testing"
 )
 
@@ -116,4 +118,44 @@ func TestCVectorTensorProduct(t *testing.T) {
 		}
 	}
 
+}
+
+func TestCVectorMeasure(t *testing.T) {
+	// 1. Make sure bell state normalized correctly
+	bellstate := NewCVectorFromElements([]Complex{
+		Complex(complex(1/math.Sqrt(2), 0)),
+		Complex(complex(0, 0)),
+		Complex(complex(0, 0)),
+		Complex(complex(1/math.Sqrt(2), 0)),
+	})
+
+	if !NearEqual(bellstate.Norm(), 1) {
+		fmt.Println(bellstate.Norm())
+		t.Error("failed to get norm")
+	}
+
+	// Ensure probablities sum to 1
+	bellstate.Probabilities()
+	probSums := float64(0)
+	for _, v := range bellstate.Probabilities() {
+		probSums += v
+	}
+	if !NearEqual(probSums, 1) {
+		t.Error("Failed to sum probabilities to 1")
+	}
+
+	// Ensure measurement is fair-ish
+	results := make(map[int]int)
+	for i := 0; i < 1000; i++ {
+		results[bellstate.Measure()]++
+	}
+
+	if results[1] != 0 || results[2] != 0 {
+		t.Error("bellstate shouldn't collapse to these states")
+	}
+
+	// really these should be equal...
+	if results[0] == 0 || results[3] == 0 {
+		t.Error("we should be getting at least a few results each")
+	}
 }
