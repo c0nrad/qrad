@@ -196,8 +196,8 @@ func TestQCircuitGHZExperiment(t *testing.T) {
 		q.ApplyGate(NewCMatrix().TensorProducts(*HadamardGate, *HadamardGate, *HadamardGate))
 
 		// -- Sd H
-		// -- Sd H
 		// --    H
+		// -- Sd H
 		q.ApplyGate(NewCMatrix().TensorProducts(*SdGate, *IdentityGate, *SdGate))
 		q.ApplyGate(NewCMatrix().TensorProducts(*HadamardGate, *HadamardGate, *HadamardGate))
 
@@ -212,9 +212,9 @@ func TestQCircuitGHZExperiment(t *testing.T) {
 		q.ApplyCNot(0, 2)
 		q.ApplyGate(NewCMatrix().TensorProducts(*HadamardGate, *HadamardGate, *HadamardGate))
 
-		// -- Sd H
-		// -- Sd H
 		// --    H
+		// -- Sd H
+		// -- Sd H
 		q.ApplyGate(NewCMatrix().TensorProducts(*IdentityGate, *SdGate, *SdGate))
 		q.ApplyGate(NewCMatrix().TensorProducts(*HadamardGate, *HadamardGate, *HadamardGate))
 
@@ -237,7 +237,6 @@ func TestQCircuitGHZExperiment(t *testing.T) {
 		resultsXYY[BinToInt("110")]+resultsXYY[BinToInt("000")] != runs {
 		t.Error("Failed to prove GHZ experiment")
 	}
-
 }
 
 func BinToInt(s string) int {

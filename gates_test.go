@@ -183,3 +183,73 @@ func TestExtendGate(t *testing.T) {
 		t.Error("Failed to construct gate")
 	}
 }
+
+func TestToffoliGate(t *testing.T) {
+	for x := 0; x < 2; x++ {
+		for y := 0; y < 2; y++ {
+			for z := 0; z < 2; z++ {
+				q := NewQCircuit([]int{x, y, z})
+				q.ApplyGate(ToffoliGate)
+
+				out := q.Measure()
+
+				zSol := (x & y) ^ z
+				sol := (zSol << 0) + (y << 1) + (x << 2)
+				if sol != out {
+					t.Error("Failed to solve toffoli gate")
+				}
+
+			}
+		}
+	}
+}
+
+func TestExtendControlControlGateSimple(t *testing.T) {
+	toffoliGuess := ExtendControlControlGate(0, 1, 2, 3, NotGate)
+	if !toffoliGuess.Equals(*ToffoliGate) {
+		toffoliGuess.PPrint()
+		t.Error("Failed to construct toffoli gate")
+	}
+}
+
+func TestExtendControlControlGateReversed(t *testing.T) {
+	toffoliGuess := ExtendControlControlGate(1, 2, 0, 3, NotGate)
+
+	for x := 0; x < 2; x++ {
+		for y := 0; y < 2; y++ {
+			for z := 0; z < 2; z++ {
+				q := NewQCircuit([]int{z, x, y})
+				q.ApplyGate(toffoliGuess)
+
+				out := q.Measure()
+
+				zSol := (x & y) ^ z
+				sol := (zSol << 2) + (y << 0) + (x << 1)
+				if sol != out {
+					t.Error("Failed to solve toffoli gate")
+				}
+
+			}
+		}
+	}
+}
+
+func TestExtendControlControlGate(t *testing.T) {
+	for x := 0; x < 2; x++ {
+		for y := 0; y < 2; y++ {
+			for z := 0; z < 2; z++ {
+				q := NewQCircuit([]int{x, y, 0, z})
+				q.ApplyGate(ExtendControlControlGate(0, 1, 3, 4, NotGate))
+
+				out := q.Measure()
+
+				zSol := (x & y) ^ z
+				sol := (zSol << 0) + (y << 2) + (x << 3)
+				if sol != out {
+					t.Error("Failed to solve toffoli gate")
+				}
+
+			}
+		}
+	}
+}
