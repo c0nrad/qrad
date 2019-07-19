@@ -1,7 +1,9 @@
 package qrad
 
-import "math"
-import "math/cmplx"
+import (
+	"math"
+	"math/cmplx"
+)
 
 var NotGate = NewCMatrixFromElements([][]Complex{
 	[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))},
@@ -69,6 +71,27 @@ func ExtendGate(gIndex, total int, gate *CMatrix) *CMatrix {
 	outGate := NewCMatrix()
 	for i := 0; i < total; i++ {
 		if i == gIndex {
+			outGate.TensorProduct(*outGate, *gate)
+		} else {
+			outGate.TensorProduct(*outGate, *IdentityGate)
+		}
+	}
+
+	return outGate
+}
+
+func ExtendGateFill(indexes []int, total int, gate *CMatrix) *CMatrix {
+	outGate := NewCMatrix()
+	for i := 0; i < total; i++ {
+
+		isMatch := false
+		for _, e := range indexes {
+			if i == e {
+				isMatch = true
+			}
+		}
+
+		if isMatch {
 			outGate.TensorProduct(*outGate, *gate)
 		} else {
 			outGate.TensorProduct(*outGate, *IdentityGate)

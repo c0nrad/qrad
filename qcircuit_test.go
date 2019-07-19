@@ -243,3 +243,71 @@ func BinToInt(s string) int {
 	o, _ := strconv.ParseInt(s, 2, 64)
 	return int(o)
 }
+
+func TestQCiruitOrReversable(t *testing.T) {
+	for x := 0; x < 2; x++ {
+		for y := 0; y < 2; y++ {
+			for z := 0; z < 2; z++ {
+
+				q := NewQCircuit([]int{x, y, z})
+				q.ApplyGate(ExtendGate(2, 3, NotGate))
+				q.ApplyOrGate(0, 1, 2)
+				q.ApplyOrGate(0, 1, 2)
+				q.ApplyGate(ExtendGate(2, 3, NotGate))
+
+				out := q.Measure()
+				if out != (x<<2)+(y<<1)+(z<<0) {
+					fmt.Println(x, y, z, fmt.Sprintf("%03b", out))
+					t.Error("failed to show OR is reversable")
+				}
+			}
+		}
+	}
+}
+
+func TestQCircuit3Or(t *testing.T) {
+	for x := 0; x < 2; x++ {
+		for y := 0; y < 2; y++ {
+			for z := 0; z < 2; z++ {
+
+				//0    o
+				//1    o
+				//2        o
+				//3  X +   o
+				//4      X +
+				q := NewQCircuit([]int{x, y, z, 0, 0})
+				q.ApplyGate(ExtendGate(3, 5, NotGate))
+				q.ApplyOrGate(0, 1, 3)
+
+				q.ApplyGate(ExtendGate(4, 5, NotGate))
+				q.ApplyOrGate(2, 3, 4)
+
+				out := q.Measure()
+
+				if out&1 != Or(Or(x, y), z) {
+					fmt.Println(x, y, z, (x+y+z)&1, fmt.Sprintf("%05b", out))
+					t.Error("failed to perform 3 gate OR")
+				}
+
+				q2 := NewQCircuit([]int{x, y, z, 0, 0})
+				q2.Apply3OrGate(0, 1, 2, 3, 4)
+				out2 := q2.Measure()
+				if out2 != out {
+					t.Error("3OrGate did not work")
+				}
+			}
+		}
+	}
+}
+
+func Or(x, y int) int {
+	if x == 1 {
+		return 1
+	}
+
+	if y == 1 {
+		return 1
+	}
+
+	return 0
+}

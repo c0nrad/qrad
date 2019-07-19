@@ -159,3 +159,19 @@ func TestCVectorMeasure(t *testing.T) {
 		t.Error("we should be getting at least a few results each")
 	}
 }
+
+func TestCVectorBitMeasure(t *testing.T) {
+
+	results := make(map[int]int)
+
+	for i := 0; i < 1; i++ {
+		q := NewQCircuit([]int{0, 0, 0})
+		q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, 3, HadamardGate))
+
+		// q.State.PrintProbabilities()
+		results[q.State.MeasureQubit(0)]++
+		// q.State.PrintProbabilities()
+	}
+	// fmt.Println(results)
+
+}

@@ -39,7 +39,7 @@ func (q *QCircuit) ApplyGate(operator *CMatrix) *QCircuit {
 }
 
 func (q *QCircuit) ApplyHadamard(index int) *QCircuit {
-	if index >= q.Length() {
+	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
 
@@ -52,7 +52,7 @@ func (q *QCircuit) ApplyH(index int) *QCircuit {
 }
 
 func (q *QCircuit) ApplyNot(index int) *QCircuit {
-	if index >= q.Length() {
+	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
 
@@ -61,7 +61,7 @@ func (q *QCircuit) ApplyNot(index int) *QCircuit {
 }
 
 func (q *QCircuit) ApplyS(index int) *QCircuit {
-	if index >= q.Length() {
+	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
 
@@ -70,7 +70,7 @@ func (q *QCircuit) ApplyS(index int) *QCircuit {
 }
 
 func (q *QCircuit) ApplyT(index int) *QCircuit {
-	if index >= q.Length() {
+	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
 
@@ -79,7 +79,7 @@ func (q *QCircuit) ApplyT(index int) *QCircuit {
 }
 
 func (q *QCircuit) ApplyTd(index int) *QCircuit {
-	if index >= q.Length() {
+	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
 
@@ -87,13 +87,47 @@ func (q *QCircuit) ApplyTd(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyCNot(control, index int) *QCircuit {
-	if index >= q.Length() || control >= q.Length() {
+func (q *QCircuit) ApplyCNot(control, target int) *QCircuit {
+	if target >= q.Qubits || control >= q.Qubits {
 		panic("qubit out of range")
 	}
 
-	operator := ExtendControlGate(control, index, q.Qubits, NotGate)
+	operator := ExtendControlGate(control, target, q.Qubits, NotGate)
 	return q.ApplyGate(operator)
+}
+
+func (q *QCircuit) ApplyToffoliGate(control0, control1, target int) *QCircuit {
+	if target >= q.Qubits || control0 >= q.Qubits || control1 >= q.Qubits {
+		panic("qubit out of range")
+	}
+
+	operator := ExtendControlControlGate(control0, control1, target, q.Qubits, NotGate)
+	return q.ApplyGate(operator)
+}
+
+func (q *QCircuit) ApplyOrGate(control0, control1, target int) *QCircuit {
+	if target >= q.Qubits || control0 >= q.Qubits || control1 >= q.Qubits {
+		panic("qubit out of range")
+	}
+
+	// X . X   ;control0
+	// X . X   ;control1
+	//   +     ;target
+	q.ApplyGate(ExtendGateFill([]int{control0, control1}, q.Qubits, NotGate))
+	q.ApplyGate(ExtendControlControlGate(control0, control1, target, q.Qubits, NotGate))
+	q.ApplyGate(ExtendGateFill([]int{control0, control1}, q.Qubits, NotGate))
+
+	return q
+}
+
+func (q *QCircuit) Apply3OrGate(control0, control1, control2, interTarget, target int) *QCircuit {
+	q.ApplyGate(ExtendGate(interTarget, q.Qubits, NotGate))
+	q.ApplyOrGate(control0, control1, interTarget)
+
+	q.ApplyGate(ExtendGate(target, q.Qubits, NotGate))
+	q.ApplyOrGate(control2, interTarget, target)
+
+	return q
 }
 
 func (q *QCircuit) MesaureQubit(index int) int {

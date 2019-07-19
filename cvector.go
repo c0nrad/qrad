@@ -1,6 +1,7 @@
 package qrad
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -160,7 +161,7 @@ func (c CVector) Probabilities() map[int]float64 {
 	return out
 }
 
-func (c *CVector) Measure() int {
+func (c CVector) Measure() int {
 	norm := c.Norm()
 	guess := rand.Float64()
 
@@ -185,4 +186,68 @@ func (c CVector) Equals(b CVector) bool {
 		}
 	}
 	return true
+}
+
+func (c *CVector) MeasureQubit(index uint) int {
+	norm := c.Norm()
+	guess := rand.Float64()
+
+	isOne := false
+
+	for i, e := range c.Elements {
+		if i&(1<<index) == 0 {
+			// fmt.Println("CURIOYUS?")
+			continue
+		}
+
+		guess -= (e.Modulus() * e.Modulus() / norm)
+		if guess < 0 {
+			isOne = true
+		}
+	}
+
+	for i, _ := range c.Elements {
+		if i&(1<<index) == 0 && isOne {
+			c.Elements[i] = NewComplex(0, 0)
+		} else if i&(1<<index) != 0 && !isOne {
+			c.Elements[i] = NewComplex(0, 0)
+
+		}
+	}
+
+	norm = c.Norm()
+	for i, e := range c.Elements {
+		if e != NewComplex(0, 0) {
+			c.Elements[i] /= NewComplex(norm, 0)
+		}
+	}
+
+	if isOne {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+func (c CVector) PrintProbabilities() {
+	probs := c.Probabilities()
+	for i := 0; i < c.Length(); i++ {
+		fmt.Printf("%2d %08b %.2f\n", i, i, probs[i])
+	}
+}
+
+func (c CVector) PrintChance(bits, total int) {
+	norm := c.Norm()
+
+	chances := make(map[int]float64)
+
+	for i, e := range c.Elements {
+		bucket := i >> uint(total-bits)
+		// fmt.Println("bucket", bucket, i, total-bits)
+		chances[bucket] += (e.Modulus() * e.Modulus() / norm)
+	}
+
+	for i := 0; i < 1<<uint(bits); i++ {
+		// fmt.Printf("%04b %.02f\n", i, chances[i])
+	}
 }

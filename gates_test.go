@@ -184,6 +184,23 @@ func TestExtendGate(t *testing.T) {
 	}
 }
 
+func TestExtendGates2(t *testing.T) {
+	operator1 := NewCMatrix()
+
+	operator1.TensorProducts(*CNotGate, *IdentityGate)
+	// operator1.PPrint()
+}
+
+// func TestExtendGateFill(t *testing.T) {
+// 	qubits := 5
+// 	q1 := NewQCircuit(make([]int, qubits))
+// 	for i := 0; i < qubits; i++ {
+// 		q.ApplyHadamard(i)
+// 	}
+// 	q.ApplyGate(ExtendGateFill([]int{0, 1, 2, 3, 4, 5}, q.Qubits, HadamardGate))
+
+// ?}
+
 func TestToffoliGate(t *testing.T) {
 	for x := 0; x < 2; x++ {
 		for y := 0; y < 2; y++ {
