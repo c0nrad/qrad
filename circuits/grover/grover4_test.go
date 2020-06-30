@@ -1,6 +1,6 @@
 package qrad
 
-// func f4(q *QCircuit) {
+// func f4(q *Circuit) {
 // 	// (a & b) & (!c & d)
 // 	// (a & b) => 4
 // 	q.ApplyToffoliGate(0, 1, 4)
@@ -14,7 +14,7 @@ package qrad
 // 	q.ApplyToffoliGate(4, 5, 6)
 // }
 
-// func f4Reverse(q *QCircuit, includeFinal bool) {
+// func f4Reverse(q *Circuit, includeFinal bool) {
 // 	if includeFinal {
 // 		q.ApplyToffoliGate(4, 5, 6)
 // 	}
@@ -30,7 +30,7 @@ package qrad
 // 		for b := 0; b < 2; b++ {
 // 			for c := 0; c < 2; c++ {
 // 				for d := 0; d < 2; d++ {
-// 					q := NewQCircuit([]int{a, b, c, d, 0, 0, 0})
+// 					q := NewCircuit([]int{a, b, c, d, 0, 0, 0})
 
 // 					f4(q)
 // 					out := q.Measure()
@@ -56,14 +56,14 @@ package qrad
 
 // func TestOracleReverse(t *testing.T) {
 
-// 	// oracles := []func(*QCircuit){f}
-// 	// reverseoracles := []func(*QCircuit, bool){fReverse}
+// 	// oracles := []func(*Circuit){f}
+// 	// reverseoracles := []func(*Circuit, bool){fReverse}
 
 // 	for a := 0; a < 2; a++ {
 // 		for b := 0; b < 2; b++ {
 // 			for c := 0; c < 2; c++ {
 // 				for d := 0; d < 2; d++ {
-// 					q := NewQCircuit([]int{a, b, c, d, 0, 0, 0})
+// 					q := NewCircuit([]int{a, b, c, d, 0, 0, 0})
 // 					f4(q)
 // 					f4Reverse(q, true)
 
@@ -72,7 +72,7 @@ package qrad
 // 						t.Error("failed to reverse")
 // 					}
 
-// 					q2 := NewQCircuit([]int{a, b, c, d, 0, 0, 0})
+// 					q2 := NewCircuit([]int{a, b, c, d, 0, 0, 0})
 // 					f4(q2)
 // 					f4Reverse(q2, false)
 // 					out2 := q2.Measure()
@@ -98,7 +98,7 @@ package qrad
 // 	t.Skip("This will take approximately 22years to finish")
 
 // 	totalqubits := 22
-// 	q := NewQCircuit(make([]int, totalqubits))
+// 	q := NewCircuit(make([]int, totalqubits))
 
 // 	// a | b | !c
 // 	fmt.Println("a | b | !c")

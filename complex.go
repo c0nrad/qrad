@@ -1,6 +1,7 @@
 package qrad
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -27,4 +28,8 @@ func (c Complex) Equals(a Complex) bool {
 
 func NearEqual(a, b float64) bool {
 	return math.Abs(a-b) < EPSILON
+}
+
+func (c Complex) String() string {
+	return fmt.Sprintf("%0.2f + %0.2fj", real(c), imag(c))
 }

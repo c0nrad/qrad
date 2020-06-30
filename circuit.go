@@ -2,13 +2,21 @@ package qrad
 
 import "fmt"
 
-type QCircuit struct {
-	State  CVector
+type Circuit struct {
+	Moments []Moment
+
+	State  Vector
 	Qubits int
 }
 
-func NewQCircuit(initialState []int) *QCircuit {
-	state := NewCVector()
+// func (c Circuit) Draw() {
+// 	for , range c.Moments {
+
+// 	}
+// }
+
+func NewCircuit(initialState []int) *Circuit {
+	state := NewVector()
 	for _, e := range initialState {
 		if e != 0 && e != 1 {
 			panic("initial state must be bits")
@@ -17,28 +25,51 @@ func NewQCircuit(initialState []int) *QCircuit {
 		state.TensorProduct(*state, *NewQubit(e))
 	}
 
-	return &QCircuit{State: *state, Qubits: len(initialState)}
+	return &Circuit{State: *state, Qubits: len(initialState)}
 }
 
-func (q QCircuit) Length() int {
+func (q Circuit) Length() int {
 	return q.State.Length()
 }
 
-func (q *QCircuit) ApplyGate(operator *CMatrix) *QCircuit {
-	if operator.Width != operator.Height {
+func (c *Circuit) Execute() {
+	for _, m := range c.Moments {
+		c.State.MulMatrix(c.State, m.Matrix())
+	}
+}
+
+func (c *Circuit) Append(g Gate, i int) {
+	c.Moments = append(c.Moments, NewMoment(c.Qubits, g, i))
+}
+
+func (c *Circuit) AppendControl(g Gate, control, i int) {
+	c.Moments = append(c.Moments, NewMomentControl(c.Qubits, g, i, []int{control}))
+}
+
+func (c Circuit) Draw() {
+	DrawMoments(c.Moments)
+}
+
+func (c Circuit) PrintStates() {
+	for i, s := range c.State.Elements {
+		fmt.Printf("|%02b> %s\n", i, s)
+	}
+}
+
+func (q *Circuit) ApplyGate(operator Gate) *Circuit {
+	if operator.Matrix.Width != operator.Matrix.Height {
 		panic("invalid operator dimensions")
 	}
 
-	if operator.Width != q.Length() {
-		fmt.Println(operator.Width, q.Length())
+	if operator.Matrix.Width != q.Length() {
 		panic("invald operator size for state vector")
 	}
 
-	q.State.MulMatrix(q.State, *operator)
+	q.State.MulMatrix(q.State, operator.Matrix)
 	return q
 }
 
-func (q *QCircuit) ApplyHadamard(index int) *QCircuit {
+func (q *Circuit) ApplyHadamard(index int) *Circuit {
 	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -47,11 +78,11 @@ func (q *QCircuit) ApplyHadamard(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyH(index int) *QCircuit {
+func (q *Circuit) ApplyH(index int) *Circuit {
 	return q.ApplyHadamard(index)
 }
 
-func (q *QCircuit) ApplyNot(index int) *QCircuit {
+func (q *Circuit) ApplyNot(index int) *Circuit {
 	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -60,7 +91,7 @@ func (q *QCircuit) ApplyNot(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyS(index int) *QCircuit {
+func (q *Circuit) ApplyS(index int) *Circuit {
 	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -69,7 +100,7 @@ func (q *QCircuit) ApplyS(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyT(index int) *QCircuit {
+func (q *Circuit) ApplyT(index int) *Circuit {
 	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -78,7 +109,7 @@ func (q *QCircuit) ApplyT(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyTd(index int) *QCircuit {
+func (q *Circuit) ApplyTd(index int) *Circuit {
 	if index >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -87,7 +118,7 @@ func (q *QCircuit) ApplyTd(index int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyCNot(control, target int) *QCircuit {
+func (q *Circuit) ApplyCNot(control, target int) *Circuit {
 	if target >= q.Qubits || control >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -96,7 +127,7 @@ func (q *QCircuit) ApplyCNot(control, target int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyToffoliGate(control0, control1, target int) *QCircuit {
+func (q *Circuit) ApplyToffoliGate(control0, control1, target int) *Circuit {
 	if target >= q.Qubits || control0 >= q.Qubits || control1 >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -105,7 +136,7 @@ func (q *QCircuit) ApplyToffoliGate(control0, control1, target int) *QCircuit {
 	return q.ApplyGate(operator)
 }
 
-func (q *QCircuit) ApplyOrGate(control0, control1, target int) *QCircuit {
+func (q *Circuit) ApplyOrGate(control0, control1, target int) *Circuit {
 	if target >= q.Qubits || control0 >= q.Qubits || control1 >= q.Qubits {
 		panic("qubit out of range")
 	}
@@ -120,7 +151,7 @@ func (q *QCircuit) ApplyOrGate(control0, control1, target int) *QCircuit {
 	return q
 }
 
-func (q *QCircuit) Apply3OrGate(control0, control1, control2, interTarget, target int) *QCircuit {
+func (q *Circuit) Apply3OrGate(control0, control1, control2, interTarget, target int) *Circuit {
 	q.ApplyGate(ExtendGate(interTarget, q.Qubits, NotGate))
 	q.ApplyOrGate(control0, control1, interTarget)
 
@@ -130,10 +161,10 @@ func (q *QCircuit) Apply3OrGate(control0, control1, control2, interTarget, targe
 	return q
 }
 
-func (q *QCircuit) MesaureQubit(index int) int {
+func (q *Circuit) MesaureQubit(index int) int {
 	panic("not implemented")
 }
 
-func (q *QCircuit) Measure() int {
+func (q *Circuit) Measure() int {
 	return q.State.Measure()
 }

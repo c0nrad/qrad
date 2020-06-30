@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func f3(q *QCircuit) {
+func f3(q *Circuit) {
 	// 5
 	// 1 a
 	// 0
@@ -21,7 +21,7 @@ func f3(q *QCircuit) {
 	q.ApplyToffoliGate(3, 2, 4)
 }
 
-func f3Reverse(q *QCircuit, includeFinal bool) {
+func f3Reverse(q *Circuit, includeFinal bool) {
 	if includeFinal {
 		q.ApplyToffoliGate(3, 2, 4)
 	}
@@ -35,7 +35,7 @@ func TestOracle3Correctness(t *testing.T) {
 	for a := 0; a < 2; a++ {
 		for b := 0; b < 2; b++ {
 			for c := 0; c < 2; c++ {
-				q := NewQCircuit([]int{a, b, c, 0, 0})
+				q := NewCircuit([]int{a, b, c, 0, 0})
 
 				f3(q)
 				out := q.Measure()
@@ -60,13 +60,13 @@ func TestOracle3Correctness(t *testing.T) {
 
 func TestOracleReverse(t *testing.T) {
 
-	// oracles := []func(*QCircuit){f}
-	// reverseoracles := []func(*QCircuit, bool){fReverse}
+	// oracles := []func(*Circuit){f}
+	// reverseoracles := []func(*Circuit, bool){fReverse}
 
 	for a := 0; a < 2; a++ {
 		for b := 0; b < 2; b++ {
 			for c := 0; c < 2; c++ {
-				q := NewQCircuit([]int{a, b, c, 0, 0})
+				q := NewCircuit([]int{a, b, c, 0, 0})
 				f3(q)
 				f3Reverse(q, true)
 
@@ -75,7 +75,7 @@ func TestOracleReverse(t *testing.T) {
 					t.Error("failed to reverse")
 				}
 
-				q2 := NewQCircuit([]int{a, b, c, 0, 0})
+				q2 := NewCircuit([]int{a, b, c, 0, 0})
 				f3(q2)
 				f3Reverse(q2, false)
 				out2 := q2.Measure()
@@ -96,7 +96,7 @@ func TestOracleReverse(t *testing.T) {
 	}
 }
 
-func grover_mover3(q *QCircuit) {
+func grover_mover3(q *Circuit) {
 	q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, q.Qubits, HadamardGate))
 	q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, q.Qubits, NotGate))
 
@@ -116,7 +116,7 @@ func TestGroversAlgorithm(t *testing.T) {
 	runs := 1000
 	for i := 0; i < runs; i++ {
 
-		q := NewQCircuit(make([]int, qubits))
+		q := NewCircuit(make([]int, qubits))
 		q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, q.Qubits, HadamardGate))
 
 		q.ApplyNot(qubits - 1)

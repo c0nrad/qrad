@@ -5,83 +5,131 @@ import (
 	"math/cmplx"
 )
 
-var NotGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))},
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-})
+type Gate struct {
+	Matrix Matrix
+
+	Symbol string
+}
+
+func (g Gate) Operands() int {
+	return int(math.Log2(float64(g.Matrix.Height)))
+}
+
+func (g Gate) IsControl() bool {
+	return g.Symbol == "C" && g.Matrix.Height == 0
+}
+
+var NotGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))},
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+	}),
+	Symbol: "X",
+}
+var X = NotGate
 var PauliXGate = NotGate
 
-var HadamardGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1/math.Sqrt(2), 0)), Complex(complex(1/math.Sqrt(2), 0))},
-	[]Complex{Complex(complex(1/math.Sqrt(2), 0)), Complex(complex(-1/math.Sqrt(2), 0))},
-})
+var HadamardGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1/math.Sqrt(2), 0)), Complex(complex(1/math.Sqrt(2), 0))},
+		[]Complex{Complex(complex(1/math.Sqrt(2), 0)), Complex(complex(-1/math.Sqrt(2), 0))},
+	}),
+	Symbol: "H",
+}
 
-var IdentityGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))},
-})
+var H = HadamardGate
 
-var PauliZGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(-1, 0))},
-})
+var IdentityGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))},
+	}),
+	Symbol: "I",
+}
+var I = IdentityGate
 
-var SGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(1i * math.Pi / 2))},
-})
+func ConstructNIdentity(s int) Gate {
+	out := NewMatrix()
+	for i := 0; i < s; i++ {
+		out.TensorProduct(*out, I.Matrix)
+	}
+	return Gate{Matrix: *out, Symbol: "I"}
+}
 
-var SdGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(-1i * math.Pi / 2))},
-})
+var PauliZGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(-1, 0))},
+	}),
+}
 
-var TGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(1i * math.Pi / 4))},
-})
+var SGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(1i * math.Pi / 2))},
+	}),
+}
 
-var TdGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(-1i * math.Pi / 4))},
-})
+var SdGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(-1i * math.Pi / 2))},
+	}),
+}
 
-var CNotGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
-})
+var TGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(1i * math.Pi / 4))},
+	}),
+}
 
-var CCNotGate = NewCMatrixFromElements([][]Complex{
-	[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0))},
-	[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
-})
+var TdGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(cmplx.Exp(-1i * math.Pi / 4))},
+	}),
+}
+
+var CNOT = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
+	}),
+}
+
+var CCNotGate = Gate{
+	Matrix: *NewMatrixFromElements([][]Complex{
+		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0))},
+		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
+	}),
+}
 
 var ToffoliGate = CCNotGate
 
-func ExtendGate(gIndex, total int, gate *CMatrix) *CMatrix {
-
-	outGate := NewCMatrix()
+func ExtendGate(gIndex, total int, gate Gate) Gate {
+	outGate := NewMatrix()
 	for i := 0; i < total; i++ {
 		if i == gIndex {
-			outGate.TensorProduct(*outGate, *gate)
+			outGate.TensorProduct(*outGate, gate.Matrix)
 		} else {
-			outGate.TensorProduct(*outGate, *IdentityGate)
+			outGate.TensorProduct(*outGate, IdentityGate.Matrix)
 		}
 	}
 
-	return outGate
+	return Gate{Matrix: *outGate}
 }
 
-func ExtendGateFill(indexes []int, total int, gate *CMatrix) *CMatrix {
-	outGate := NewCMatrix()
+func ExtendGateFill(indexes []int, total int, gate Gate) Gate {
+	outGate := NewMatrix()
 	for i := 0; i < total; i++ {
 
 		isMatch := false
@@ -92,73 +140,80 @@ func ExtendGateFill(indexes []int, total int, gate *CMatrix) *CMatrix {
 		}
 
 		if isMatch {
-			outGate.TensorProduct(*outGate, *gate)
+			outGate.TensorProduct(*outGate, gate.Matrix)
 		} else {
-			outGate.TensorProduct(*outGate, *IdentityGate)
+			outGate.TensorProduct(*outGate, IdentityGate.Matrix)
 		}
 	}
 
-	return outGate
+	return Gate{Matrix: *outGate}
 }
 
-func ExtendControlGate(cIndex, gIndex, total int, gate *CMatrix) *CMatrix {
-	zero := NewCMatrixFromElements([][]Complex{
-		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))}})
-	zerot := NewCMatrix().Transpose(*zero)
+func ExtendControlGate(cIndex, gIndex, total int, gate Gate) Gate {
+	// fmt.Println("ExtendControlGate", cIndex, gIndex, total, gate)
+	zero := NewMatrixFromElements([][]Complex{
+		{Complex(complex(1, 0)), Complex(complex(0, 0))}})
+	zerot := NewMatrix().Transpose(*zero)
 
-	one := NewCMatrixFromElements([][]Complex{
-		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))}})
-	onet := NewCMatrix().Transpose(*one)
+	one := NewMatrixFromElements([][]Complex{
+		{Complex(complex(0, 0)), Complex(complex(1, 0))}})
+	onet := NewMatrix().Transpose(*one)
 
-	zeroMatrix := NewCMatrix().TensorProduct(*zero, *zerot)
-	oneMatrix := NewCMatrix().TensorProduct(*one, *onet)
+	zeroMatrix := NewMatrix().TensorProduct(*zero, *zerot)
+	oneMatrix := NewMatrix().TensorProduct(*one, *onet)
 
-	outControl := NewCMatrix()
-	outGate := NewCMatrix()
+	identityMatrix := ConstructNIdentity(gate.Operands())
+
+	outControl := NewMatrix()
+	outGate := NewMatrix()
 	for i := 0; i < total; i++ {
 		if i == cIndex {
 			outControl.TensorProduct(*outControl, *zeroMatrix)
 		} else {
-			outControl.TensorProduct(*outControl, *IdentityGate)
+			outControl.TensorProduct(*outControl, identityMatrix.Matrix)
 		}
 
 		if i == cIndex {
 			outGate.TensorProduct(*outGate, *oneMatrix)
 		} else if i == gIndex {
-			outGate.TensorProduct(*outGate, *gate)
+			outGate.TensorProduct(*outGate, gate.Matrix)
 		} else {
-			outGate.TensorProduct(*outGate, *IdentityGate)
+			outGate.TensorProduct(*outGate, identityMatrix.Matrix)
 		}
 	}
 
+	// fmt.Println("After ExtenControlGate")
+	// outControl.PPrint()
+	// outGate.PPrint()
+
 	outControl.Add(*outControl, *outGate)
-	return outControl
+	return Gate{Matrix: *outControl, Symbol: "C" + gate.Symbol}
 }
 
-func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate *CMatrix) *CMatrix {
-	zero := NewCMatrixFromElements([][]Complex{
+func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate Gate) Gate {
+	zero := NewMatrixFromElements([][]Complex{
 		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))}})
-	zerot := NewCMatrix().Transpose(*zero)
+	zerot := NewMatrix().Transpose(*zero)
 
-	one := NewCMatrixFromElements([][]Complex{
+	one := NewMatrixFromElements([][]Complex{
 		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0))}})
-	onet := NewCMatrix().Transpose(*one)
+	onet := NewMatrix().Transpose(*one)
 
-	zeroMatrix := NewCMatrix().TensorProduct(*zero, *zerot)
-	oneMatrix := NewCMatrix().TensorProduct(*one, *onet)
+	zeroMatrix := NewMatrix().TensorProduct(*zero, *zerot)
+	oneMatrix := NewMatrix().TensorProduct(*one, *onet)
 
-	out00Control := NewCMatrix()
-	out10Control := NewCMatrix()
-	out01Control := NewCMatrix()
+	out00Control := NewMatrix()
+	out10Control := NewMatrix()
+	out01Control := NewMatrix()
 
-	outGate := NewCMatrix()
+	outGate := NewMatrix()
 	for i := 0; i < total; i++ {
 		if i == c0Index {
 			out00Control.TensorProduct(*out00Control, *zeroMatrix)
 		} else if i == c1Index {
 			out00Control.TensorProduct(*out00Control, *zeroMatrix)
 		} else {
-			out00Control.TensorProduct(*out00Control, *IdentityGate)
+			out00Control.TensorProduct(*out00Control, IdentityGate.Matrix)
 		}
 
 		if i == c0Index {
@@ -166,7 +221,7 @@ func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate *CMatrix
 		} else if i == c1Index {
 			out10Control.TensorProduct(*out10Control, *zeroMatrix)
 		} else {
-			out10Control.TensorProduct(*out10Control, *IdentityGate)
+			out10Control.TensorProduct(*out10Control, IdentityGate.Matrix)
 		}
 
 		if i == c0Index {
@@ -174,7 +229,7 @@ func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate *CMatrix
 		} else if i == c1Index {
 			out01Control.TensorProduct(*out01Control, *oneMatrix)
 		} else {
-			out01Control.TensorProduct(*out01Control, *IdentityGate)
+			out01Control.TensorProduct(*out01Control, IdentityGate.Matrix)
 		}
 
 		if i == c0Index {
@@ -182,13 +237,13 @@ func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate *CMatrix
 		} else if i == c1Index {
 			outGate.TensorProduct(*outGate, *oneMatrix)
 		} else if i == gIndex {
-			outGate.TensorProduct(*outGate, *gate)
+			outGate.TensorProduct(*outGate, gate.Matrix)
 		} else {
-			outGate.TensorProduct(*outGate, *IdentityGate)
+			outGate.TensorProduct(*outGate, IdentityGate.Matrix)
 		}
 	}
 
-	out := NewCMatrix()
+	out := NewMatrix()
 	out.Add(*out00Control, *outGate).Add(*out, *out01Control).Add(*out, *out10Control)
 
 	// out00Control.PPrint()
@@ -196,5 +251,5 @@ func ExtendControlControlGate(c0Index, c1Index, gIndex, total int, gate *CMatrix
 	// out10Control.PPrint()
 	// outGate.PPrint()
 
-	return out
+	return Gate{Matrix: *out}
 }

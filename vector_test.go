@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestCVectorAdd(t *testing.T) {
+func TestVectorAdd(t *testing.T) {
 	a1 := []Complex{
 		complex(6, -4), complex(7, 3), complex(4.2, -8.1), complex(0, -3),
 	}
@@ -19,9 +19,9 @@ func TestCVectorAdd(t *testing.T) {
 		complex(22, -1.7), complex(7, -4), complex(10.2, -8.1), complex(0, -7),
 	}
 
-	av1 := CVector{Elements: a1}
-	bv1 := CVector{Elements: b1}
-	sv1 := NewCVector()
+	av1 := Vector{Elements: a1}
+	bv1 := Vector{Elements: b1}
+	sv1 := NewVector()
 	sv1.Add(av1, bv1)
 
 	for i := range s1 {
@@ -32,7 +32,7 @@ func TestCVectorAdd(t *testing.T) {
 	}
 }
 
-func TestCVectorSub(t *testing.T) {
+func TestVectorSub(t *testing.T) {
 	a1 := []Complex{
 		complex(6, -4), complex(7, 3), complex(4.2, -8.1), complex(0, -3),
 	}
@@ -41,8 +41,8 @@ func TestCVectorSub(t *testing.T) {
 		complex(0, 0), complex(0, 0), complex(0, 0), complex(0, 0),
 	}
 
-	av1 := CVector{Elements: a1}
-	sv1 := NewCVector()
+	av1 := Vector{Elements: a1}
+	sv1 := NewVector()
 	sv1.Sub(av1, av1)
 
 	for i := range s1 {
@@ -53,7 +53,7 @@ func TestCVectorSub(t *testing.T) {
 	}
 }
 
-func TestCVectorMulScalar(t *testing.T) {
+func TestVectorMulScalar(t *testing.T) {
 	a1 := []Complex{
 		complex(6, 3), complex(0, 0), complex(5, 1), complex(4, 0),
 	}
@@ -64,8 +64,8 @@ func TestCVectorMulScalar(t *testing.T) {
 		complex(12, 21), complex(0, 0), complex(13, 13), complex(12, 8),
 	}
 
-	av1 := CVector{Elements: a1}
-	sv1 := NewCVector()
+	av1 := Vector{Elements: a1}
+	sv1 := NewVector()
 	sv1.MulScalar(b1, av1)
 
 	for i := range s1 {
@@ -76,7 +76,7 @@ func TestCVectorMulScalar(t *testing.T) {
 	}
 }
 
-func TestCVectorMulMatrix(t *testing.T) {
+func TestVectorMulMatrix(t *testing.T) {
 	a1 := [][]Complex{
 		[]Complex{complex(4, 0), complex(-1, 0)},
 		[]Complex{complex(2, 0), complex(1, 0)},
@@ -88,9 +88,9 @@ func TestCVectorMulMatrix(t *testing.T) {
 		complex(2, 0), complex(4, 0),
 	}
 
-	am1 := NewCMatrixFromElements(a1)
-	bv1 := NewCVectorFromElements(b1)
-	sv1 := NewCVector()
+	am1 := NewMatrixFromElements(a1)
+	bv1 := NewVectorFromElements(b1)
+	sv1 := NewVector()
 	sv1.MulMatrix(*bv1, *am1)
 
 	for i := range s1 {
@@ -101,15 +101,15 @@ func TestCVectorMulMatrix(t *testing.T) {
 	}
 }
 
-func TestCVectorTensorProduct(t *testing.T) {
-	a := NewCVectorFromElements([]Complex{complex(2, 0), complex(3, 0)})
+func TestVectorTensorProduct(t *testing.T) {
+	a := NewVectorFromElements([]Complex{complex(2, 0), complex(3, 0)})
 
-	b := NewCVectorFromElements([]Complex{complex(4, 0), complex(6, 0), complex(3, 0)})
+	b := NewVectorFromElements([]Complex{complex(4, 0), complex(6, 0), complex(3, 0)})
 
-	s := NewCVectorFromElements([]Complex{complex(8, 0), complex(12, 0),
+	s := NewVectorFromElements([]Complex{complex(8, 0), complex(12, 0),
 		complex(6, 0), complex(12, 0), complex(18, 0), complex(9, 0)})
 
-	g := NewCVector()
+	g := NewVector()
 	g.TensorProduct(*a, *b)
 
 	for h := 0; h < g.Length(); h++ {
@@ -120,9 +120,9 @@ func TestCVectorTensorProduct(t *testing.T) {
 
 }
 
-func TestCVectorMeasure(t *testing.T) {
+func TestVectorMeasure(t *testing.T) {
 	// 1. Make sure bell state normalized correctly
-	bellstate := NewCVectorFromElements([]Complex{
+	bellstate := NewVectorFromElements([]Complex{
 		Complex(complex(1/math.Sqrt(2), 0)),
 		Complex(complex(0, 0)),
 		Complex(complex(0, 0)),
@@ -160,12 +160,12 @@ func TestCVectorMeasure(t *testing.T) {
 	}
 }
 
-func TestCVectorBitMeasure(t *testing.T) {
+func TestVectorBitMeasure(t *testing.T) {
 
 	results := make(map[int]int)
 
 	for i := 0; i < 1; i++ {
-		q := NewQCircuit([]int{0, 0, 0})
+		q := NewCircuit([]int{0, 0, 0})
 		q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, 3, HadamardGate))
 
 		// q.State.PrintProbabilities()

@@ -10,11 +10,11 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-type CVector struct {
+type Vector struct {
 	Elements []Complex
 }
 
-func (c CVector) At(i int) Complex {
+func (c Vector) At(i int) Complex {
 	if i > len(c.Elements) {
 		panic("Invalid offset")
 	}
@@ -22,7 +22,7 @@ func (c CVector) At(i int) Complex {
 	return c.Elements[i]
 }
 
-func (c *CVector) Set(i int, e Complex) {
+func (c *Vector) Set(i int, e Complex) {
 	if i >= c.Length() {
 		panic("Invalid offset")
 	}
@@ -30,32 +30,32 @@ func (c *CVector) Set(i int, e Complex) {
 	c.Elements[i] = e
 }
 
-func (c *CVector) Resize(i int) *CVector {
+func (c *Vector) Resize(i int) *Vector {
 	c.Elements = make([]Complex, i)
 	return c
 }
 
-func (c CVector) Length() int {
+func (c Vector) Length() int {
 	return len(c.Elements)
 }
 
-func NewCVector() *CVector {
-	return &CVector{Elements: make([]Complex, 0)}
+func NewVector() *Vector {
+	return &Vector{Elements: make([]Complex, 0)}
 }
 
-func NewQubit(i int) *CVector {
+func NewQubit(i int) *Vector {
 	if i == 0 {
-		return &CVector{Elements: []Complex{complex(1, 0), complex(0, 0)}}
+		return &Vector{Elements: []Complex{complex(1, 0), complex(0, 0)}}
 	} else {
-		return &CVector{Elements: []Complex{complex(0, 0), complex(1, 0)}}
+		return &Vector{Elements: []Complex{complex(0, 0), complex(1, 0)}}
 	}
 }
 
-func NewCVectorFromElements(elements []Complex) *CVector {
-	return &CVector{Elements: elements}
+func NewVectorFromElements(elements []Complex) *Vector {
+	return &Vector{Elements: elements}
 }
 
-func (c *CVector) Add(a, b CVector) {
+func (c *Vector) Add(a, b Vector) {
 	if a.Length() != b.Length() {
 		panic("Invalid vector lengths")
 	}
@@ -67,7 +67,7 @@ func (c *CVector) Add(a, b CVector) {
 	}
 }
 
-func (c *CVector) Sub(a, b CVector) {
+func (c *Vector) Sub(a, b Vector) {
 	if a.Length() != b.Length() {
 		panic("Invalid vector lengths")
 	}
@@ -79,7 +79,7 @@ func (c *CVector) Sub(a, b CVector) {
 	}
 }
 
-func (c *CVector) MulScalar(scalar Complex, v CVector) {
+func (c *Vector) MulScalar(scalar Complex, v Vector) {
 	c.Resize(v.Length())
 
 	for i := 0; i < v.Length(); i++ {
@@ -87,7 +87,7 @@ func (c *CVector) MulScalar(scalar Complex, v CVector) {
 	}
 }
 
-func (c *CVector) MulMatrix(v CVector, m CMatrix) {
+func (c *Vector) MulMatrix(v Vector, m Matrix) {
 	if v.Length() != m.Width {
 		panic("Invalid dimensions")
 	}
@@ -104,7 +104,7 @@ func (c *CVector) MulMatrix(v CVector, m CMatrix) {
 	}
 }
 
-func (c *CVector) TensorProduct(a, b CVector) *CVector {
+func (c *Vector) TensorProduct(a, b Vector) *Vector {
 	if a.Length() == 0 {
 		c.Elements = b.Elements[:]
 		return c
@@ -128,8 +128,8 @@ func (c *CVector) TensorProduct(a, b CVector) *CVector {
 	return c
 }
 
-func (c CVector) CMatrix() *CMatrix {
-	m := NewCMatrix()
+func (c Vector) Matrix() *Matrix {
+	m := NewMatrix()
 	m.Resize(1, c.Length())
 
 	for i := 0; i < c.Length(); i++ {
@@ -138,10 +138,10 @@ func (c CVector) CMatrix() *CMatrix {
 	return m
 }
 
-func (c CVector) Norm() float64 {
+func (c Vector) Norm() float64 {
 	// | < p | p > |
-	bra := c.CMatrix().Dagger()
-	key := c.CMatrix()
+	bra := NewMatrix().Adjoint(*c.Matrix())
+	key := c.Matrix()
 
 	innerProduct := bra.MulMatrix(*bra, *key)
 
@@ -152,7 +152,7 @@ func (c CVector) Norm() float64 {
 	return innerProduct.At(0, 0).Modulus()
 }
 
-func (c CVector) Probabilities() map[int]float64 {
+func (c Vector) Probabilities() map[int]float64 {
 	out := make(map[int]float64)
 	norm := c.Norm()
 	for i, e := range c.Elements {
@@ -161,7 +161,7 @@ func (c CVector) Probabilities() map[int]float64 {
 	return out
 }
 
-func (c CVector) Measure() int {
+func (c Vector) Measure() int {
 	norm := c.Norm()
 	guess := rand.Float64()
 
@@ -175,7 +175,7 @@ func (c CVector) Measure() int {
 	panic("the numbers mason, what do they mean?")
 }
 
-func (c CVector) Equals(b CVector) bool {
+func (c Vector) Equals(b Vector) bool {
 	if c.Length() != b.Length() {
 		return false
 	}
@@ -188,7 +188,7 @@ func (c CVector) Equals(b CVector) bool {
 	return true
 }
 
-func (c *CVector) MeasureQubit(index uint) int {
+func (c *Vector) MeasureQubit(index uint) int {
 	norm := c.Norm()
 	guess := rand.Float64()
 
@@ -229,14 +229,14 @@ func (c *CVector) MeasureQubit(index uint) int {
 	}
 }
 
-func (c CVector) PrintProbabilities() {
+func (c Vector) PrintProbabilities() {
 	probs := c.Probabilities()
 	for i := 0; i < c.Length(); i++ {
 		fmt.Printf("%2d %08b %.2f\n", i, i, probs[i])
 	}
 }
 
-func (c CVector) PrintChance(bits, total int) {
+func (c Vector) PrintChance(bits, total int) {
 	norm := c.Norm()
 
 	chances := make(map[int]float64)

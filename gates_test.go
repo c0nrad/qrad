@@ -5,29 +5,41 @@ import (
 	"testing"
 )
 
+func TestConstructIdentity(t *testing.T) {
+	if !ConstructNIdentity(1).Matrix.Equals(I.Matrix) {
+		t.Error("failed to construct 1-Identiy")
+	}
+
+	identity2 := NewMatrix().TensorProduct(I.Matrix, I.Matrix)
+	if !identity2.Equals(ConstructNIdentity(2).Matrix) {
+		t.Error("failed to construct 2-identity")
+	}
+
+}
+
 func TestBellStateConstruction(t *testing.T) {
 
 	// Prepare two qubits |00>
-	state0 := NewCVector()
+	state0 := NewVector()
 	state0.TensorProduct(*NewQubit(0), *NewQubit(0))
 
 	// Hadamard
 	// ---[ H ]
 	// --------
-	operator1 := NewCMatrix()
-	operator1.TensorProduct(*HadamardGate, *IdentityGate)
+	operator1 := NewMatrix()
+	operator1.TensorProduct(HadamardGate.Matrix, IdentityGate.Matrix)
 
-	state1 := NewCVector()
+	state1 := NewVector()
 	state1.MulMatrix(*state0, *operator1)
 
 	// CNOT
 	// -----.--
 	// ----(X)-
-	operator2 := CNotGate
-	state2 := NewCVector()
-	state2.MulMatrix(*state1, *operator2)
+	operator2 := CNOT
+	state2 := NewVector()
+	state2.MulMatrix(*state1, operator2.Matrix)
 
-	solution := NewCVectorFromElements([]Complex{
+	solution := NewVectorFromElements([]Complex{
 		Complex(complex(1/math.Sqrt(2), 0)),
 		Complex(complex(0, 0)),
 		Complex(complex(0, 0)),
@@ -75,51 +87,51 @@ func TestQuantumSuperDenseCoding(t *testing.T) {
 
 	for _, m := range message {
 		// Construct Bellstate
-		state0 := NewCVector()
+		state0 := NewVector()
 		state0.TensorProduct(*NewQubit(0), *NewQubit(0))
 
-		operator1 := NewCMatrix()
-		operator1.TensorProduct(*HadamardGate, *IdentityGate)
-		state1 := NewCVector()
+		operator1 := NewMatrix()
+		operator1.TensorProduct(HadamardGate.Matrix, IdentityGate.Matrix)
+		state1 := NewVector()
 		state1.MulMatrix(*state0, *operator1)
 
-		operator2 := CNotGate
-		state2 := NewCVector()
-		state2.MulMatrix(*state1, *operator2)
+		operator2 := CNOT
+		state2 := NewVector()
+		state2.MulMatrix(*state1, operator2.Matrix)
 
 		// Alice encoders her info
-		aliceState := NewCVector()
+		aliceState := NewVector()
 		switch m {
 		case 0:
-			operator3 := NewCMatrix()
-			operator3.TensorProduct(*IdentityGate, *IdentityGate)
+			operator3 := NewMatrix()
+			operator3.TensorProduct(IdentityGate.Matrix, IdentityGate.Matrix)
 			aliceState.MulMatrix(*state2, *operator3)
 		case 1:
-			operator3 := NewCMatrix()
-			operator3.TensorProduct(*PauliXGate, *IdentityGate)
+			operator3 := NewMatrix()
+			operator3.TensorProduct(PauliXGate.Matrix, IdentityGate.Matrix)
 			aliceState.MulMatrix(*state2, *operator3)
 		case 2:
-			operator3 := NewCMatrix()
-			operator3.TensorProduct(*PauliZGate, *IdentityGate)
+			operator3 := NewMatrix()
+			operator3.TensorProduct(PauliZGate.Matrix, IdentityGate.Matrix)
 			aliceState.MulMatrix(*state2, *operator3)
 		case 3:
-			operator3 := NewCMatrix()
-			operator3.TensorProduct(*PauliZGate, *IdentityGate)
+			operator3 := NewMatrix()
+			operator3.TensorProduct(PauliZGate.Matrix, IdentityGate.Matrix)
 
-			operator4 := NewCMatrix()
-			operator4.TensorProduct(*PauliXGate, *IdentityGate)
+			operator4 := NewMatrix()
+			operator4.TensorProduct(PauliXGate.Matrix, IdentityGate.Matrix)
 
 			aliceState.MulMatrix(*state2, *operator3)
 			aliceState.MulMatrix(*aliceState, *operator4)
 		}
 
 		// Bob decoders the info
-		state3 := NewCVector()
-		state3.MulMatrix(*aliceState, *CNotGate)
+		state3 := NewVector()
+		state3.MulMatrix(*aliceState, CNOT.Matrix)
 
-		state4 := NewCVector()
-		operator5 := NewCMatrix()
-		operator5.TensorProduct(*HadamardGate, *IdentityGate)
+		state4 := NewVector()
+		operator5 := NewMatrix()
+		operator5.TensorProduct(HadamardGate.Matrix, IdentityGate.Matrix)
 
 		state4.MulMatrix(*state3, *operator5)
 
@@ -143,17 +155,17 @@ func TestQuantumSuperDenseCoding(t *testing.T) {
 func TestExtendControlGate(t *testing.T) {
 	// ----.----
 	// ----X----
-	cnot2 := ExtendControlGate(0, 1, 2, NotGate)
+	cnot2 := ExtendControlGate(0, 1, 2, X)
 
-	if !cnot2.Equals(*CNotGate) {
+	if !cnot2.Matrix.Equals(CNOT.Matrix) {
 		t.Error("Failed to build standard CNOT gate")
 	}
 
 	// ----.----
 	// ----|----
 	// ----X----
-	cnot3 := ExtendControlGate(0, 2, 3, NotGate)
-	cnot3sol := NewCMatrixFromElements([][]Complex{
+	cnot3 := ExtendControlGate(0, 2, 3, X)
+	cnot3sol := NewMatrixFromElements([][]Complex{
 		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
 		[]Complex{Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
 		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0))},
@@ -164,7 +176,7 @@ func TestExtendControlGate(t *testing.T) {
 		[]Complex{Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(0, 0)), Complex(complex(1, 0)), Complex(complex(0, 0))},
 	})
 
-	if !cnot3.Equals(*cnot3sol) {
+	if !cnot3.Matrix.Equals(*cnot3sol) {
 		t.Error("Failed to build extended 3 bit CNOT gate")
 	}
 }
@@ -174,26 +186,26 @@ func TestExtendControlGate(t *testing.T) {
 // }
 
 func TestExtendGate(t *testing.T) {
-	operator1 := NewCMatrix()
-	operator1.TensorProduct(*HadamardGate, *IdentityGate)
+	operator1 := NewMatrix()
+	operator1.TensorProduct(HadamardGate.Matrix, IdentityGate.Matrix)
 
 	hadamard2 := ExtendGate(0, 2, HadamardGate)
 
-	if !hadamard2.Equals(*operator1) {
+	if !hadamard2.Matrix.Equals(*operator1) {
 		t.Error("Failed to construct gate")
 	}
 }
 
 func TestExtendGates2(t *testing.T) {
-	operator1 := NewCMatrix()
+	operator1 := NewMatrix()
 
-	operator1.TensorProducts(*CNotGate, *IdentityGate)
+	operator1.TensorProducts(CNOT.Matrix, IdentityGate.Matrix)
 	// operator1.PPrint()
 }
 
 // func TestExtendGateFill(t *testing.T) {
 // 	qubits := 5
-// 	q1 := NewQCircuit(make([]int, qubits))
+// 	q1 := NewCircuit(make([]int, qubits))
 // 	for i := 0; i < qubits; i++ {
 // 		q.ApplyHadamard(i)
 // 	}
@@ -205,7 +217,7 @@ func TestToffoliGate(t *testing.T) {
 	for x := 0; x < 2; x++ {
 		for y := 0; y < 2; y++ {
 			for z := 0; z < 2; z++ {
-				q := NewQCircuit([]int{x, y, z})
+				q := NewCircuit([]int{x, y, z})
 				q.ApplyGate(ToffoliGate)
 
 				out := q.Measure()
@@ -223,8 +235,8 @@ func TestToffoliGate(t *testing.T) {
 
 func TestExtendControlControlGateSimple(t *testing.T) {
 	toffoliGuess := ExtendControlControlGate(0, 1, 2, 3, NotGate)
-	if !toffoliGuess.Equals(*ToffoliGate) {
-		toffoliGuess.PPrint()
+	if !toffoliGuess.Matrix.Equals(ToffoliGate.Matrix) {
+		toffoliGuess.Matrix.PPrint()
 		t.Error("Failed to construct toffoli gate")
 	}
 }
@@ -235,7 +247,7 @@ func TestExtendControlControlGateReversed(t *testing.T) {
 	for x := 0; x < 2; x++ {
 		for y := 0; y < 2; y++ {
 			for z := 0; z < 2; z++ {
-				q := NewQCircuit([]int{z, x, y})
+				q := NewCircuit([]int{z, x, y})
 				q.ApplyGate(toffoliGuess)
 
 				out := q.Measure()
@@ -255,7 +267,7 @@ func TestExtendControlControlGate(t *testing.T) {
 	for x := 0; x < 2; x++ {
 		for y := 0; y < 2; y++ {
 			for z := 0; z < 2; z++ {
-				q := NewQCircuit([]int{x, y, 0, z})
+				q := NewCircuit([]int{x, y, 0, z})
 				q.ApplyGate(ExtendControlControlGate(0, 1, 3, 4, NotGate))
 
 				out := q.Measure()
