@@ -145,20 +145,41 @@ func ConstructMomentMatrix(moment Moment) Matrix {
 		}
 	}
 
-	// fmt.Println("Gates", gates)
-
 	for len(gates) != 1 {
-		for i, g := range gates {
+		hasControl := false
+		for _, g := range gates {
 			if g.IsControl() {
+				hasControl = true
+				break
+			}
+		}
+
+		if !hasControl {
+			out := *NewMatrix()
+			for _, g := range gates {
+				out.TensorProduct(out, g.Matrix)
+			}
+			return out
+		}
+
+		for i, g := range gates {
+			if g.IsControl() || g.Matrix.IsIdentity() {
 				continue
 			}
 
 			gateIndex := i
 			otherIndex := i + 1
+			newSymbol := ""
 
 			if i+1 >= len(gates) {
 				otherIndex = i - 1
+				newSymbol = gates[otherIndex].Symbol + gates[gateIndex].Symbol
+			} else {
+				newSymbol = gates[gateIndex].Symbol + gates[otherIndex].Symbol
+
 			}
+
+			fmt.Println(gateIndex, otherIndex, gates[gateIndex].Symbol, gates[otherIndex].Symbol)
 
 			var merged Gate
 			if gates[otherIndex].IsControl() {
@@ -169,7 +190,11 @@ func ConstructMomentMatrix(moment Moment) Matrix {
 				}
 
 			} else {
-				merged = Gate{Matrix: *NewMatrix().TensorProduct(gates[gateIndex].Matrix, gates[otherIndex].Matrix), Symbol: gates[gateIndex].Symbol + "×" + gates[otherIndex].Symbol}
+				if gateIndex < otherIndex {
+					merged = Gate{Matrix: *NewMatrix().TensorProduct(gates[gateIndex].Matrix, gates[otherIndex].Matrix), Symbol: newSymbol}
+				} else {
+					merged = Gate{Matrix: *NewMatrix().TensorProduct(gates[otherIndex].Matrix, gates[gateIndex].Matrix), Symbol: newSymbol}
+				}
 			}
 
 			gates[gateIndex] = merged

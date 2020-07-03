@@ -9,8 +9,8 @@ import (
 func main() {
 	c := qrad.NewCircuit([]int{0, 0})
 
-	c.Append(qrad.H, 0)
-	c.AppendControl(qrad.X, 0, 1)
+	c.Append(qrad.H, []int{0})
+	c.AppendControl(qrad.X, []int{0}, 1)
 
 	c.Draw()
 	c.Execute()

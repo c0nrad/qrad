@@ -61,6 +61,7 @@ var PauliZGate = Gate{
 		[]Complex{Complex(complex(1, 0)), Complex(complex(0, 0))},
 		[]Complex{Complex(complex(0, 0)), Complex(complex(-1, 0))},
 	}),
+	Symbol: "Z",
 }
 
 var SGate = Gate{

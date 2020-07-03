@@ -15,7 +15,7 @@ func TestCircuitHadamardSimple(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		c := NewCircuit([]int{0, 0})
-		c.Append(H, 0)
+		c.Append(H, []int{0})
 		c.Execute()
 
 		for i := range solution.Elements {
@@ -31,15 +31,24 @@ func TestCircuitHadamardSimple(t *testing.T) {
 	}
 }
 
+func TestInitialState(t *testing.T) {
+	c := NewCircuit([]int{0, 0, 1})
+	c.Append(I, []int{0})
+	c.Execute()
+	if c.Measure() != 1 {
+		t.Error("circuit is reversed", c.Measure())
+	}
+}
+
 func TestBellStateReversed(t *testing.T) {
 	c1 := NewCircuit([]int{1, 0})
-	c1.Append(H, 0)
-	c1.AppendControl(X, 0, 1)
+	c1.Append(H, []int{0})
+	c1.AppendControl(X, []int{0}, 1)
 	c1.Execute()
 
 	c2 := NewCircuit([]int{0, 1})
-	c2.Append(H, 1)
-	c2.AppendControl(X, 1, 0)
+	c2.Append(H, []int{1})
+	c2.AppendControl(X, []int{1}, 0)
 	c2.Execute()
 
 	if !c1.State.Equals(c2.State) {
@@ -53,13 +62,13 @@ func TestBellStateReversed(t *testing.T) {
 
 func TestCCNOTMoment(t *testing.T) {
 	c1 := NewCircuit([]int{1, 0})
-	c1.Append(H, 0)
-	c1.AppendControl(X, 0, 1)
+	c1.Append(H, []int{0})
+	c1.AppendControl(X, []int{0}, 1)
 	c1.Execute()
 
 	c2 := NewCircuit([]int{0, 1})
-	c2.Append(H, 1)
-	c2.AppendControl(X, 1, 0)
+	c2.Append(H, []int{1})
+	c2.AppendControl(X, []int{1}, 0)
 	c2.Execute()
 
 	if !c1.State.Equals(c2.State) {
@@ -68,6 +77,35 @@ func TestCCNOTMoment(t *testing.T) {
 		c1.PrintStates()
 		c2.PrintStates()
 		t.Error("reversed bell state incorrect")
+	}
+}
+
+func TestCCINOT(t *testing.T) {
+	//HERE
+
+	// 1 .   --- 1
+	// 1 .   --- 1
+	// 0     --- 0
+	// 0 X   --- 1
+
+	c := NewCircuit([]int{1, 1, 0, 0})
+	c.AppendControl(X, []int{0, 1}, 3)
+
+	c.Execute()
+
+	if c.Measure() != 13 {
+		t.Error("failed to apply CCNOT")
+	}
+}
+
+func TestCCCNOT(t *testing.T) {
+	c := NewCircuit([]int{1, 1, 1, 0})
+	c.AppendControl(X, []int{0, 1, 2}, 3)
+
+	c.Execute()
+
+	if c.Measure() != 15 {
+		t.Error("failed to apply CCNOT")
 	}
 }
 
@@ -349,3 +387,84 @@ func TestCCNOTMoment(t *testing.T) {
 
 // 	return 0
 // }
+
+func TestMeasureSingleQubit(t *testing.T) {
+	for x := 0; x < 10; x++ {
+		c := NewCircuit([]int{0, 0})
+		c.Append(H, []int{0})
+		c.AppendControl(X, []int{0}, 1)
+		c.Execute()
+
+		c.Draw()
+		c.PrintStates()
+
+		out1 := c.MeasureQubit(0)
+		out2 := c.MeasureQubit(1)
+
+		c.PrintStates()
+
+		if out1 != out2 {
+			t.Error("qubits should match")
+		}
+
+		if c.Measure() == 3 && (out1 != 1 || out2 != 1) {
+			t.Error("the states are wier")
+		}
+
+		if c.Measure() == 0 && (out1 != 0 || out2 != 0) {
+			t.Error("states should all be zero")
+		}
+
+		if c.Measure() != 3 && c.Measure() != 0 {
+			t.Error("bad bell state", c.Measure())
+		}
+	}
+}
+
+func TestDelayedMoment(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		c := NewCircuit([]int{0, 0})
+		c.Append(H, []int{0})
+		steps1 := c.Execute()
+		if steps1 != 1 {
+			t.Error("failed to take one steps")
+		}
+
+		c.AppendControl(X, []int{0}, 1)
+		steps2 := c.Execute()
+		if steps2 != 1 {
+			t.Error("failed to take one step")
+		}
+
+		out := c.Measure()
+		if out != 3 && out != 0 {
+			t.Error("bad bell state", out)
+		}
+	}
+}
+
+func TestOffsetHadamard(t *testing.T) {
+	// for x := 0; x < 10; x++ {
+	c := NewCircuit([]int{0, 0, 0})
+	// c.Append(X, []int{0})
+	c.Append(H, []int{1})
+	// c.Execute()
+	// if c.MeasureQubit(0) != 0 {
+	// 	t.Error("measured non-zero qubit", c.MeasureQubit(0))
+	// }
+	c.Execute()
+	c.Draw()
+	c.PrintStates()
+
+	c.AppendControl(X, []int{1}, 2)
+
+	c.Execute()
+	c.Draw()
+	c.PrintStates()
+
+	if c.MeasureQubit(0) != 0 {
+		t.Error("measured non-zero qubit", c.MeasureQubit(0))
+	}
+
+	// }
+}

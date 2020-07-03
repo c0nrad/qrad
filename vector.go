@@ -2,6 +2,7 @@ package qrad
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -23,7 +24,7 @@ func (c Vector) At(i int) Complex {
 }
 
 func (c *Vector) Set(i int, e Complex) {
-	if i >= c.Length() {
+	if i >= c.Size() {
 		panic("Invalid offset")
 	}
 
@@ -35,7 +36,7 @@ func (c *Vector) Resize(i int) *Vector {
 	return c
 }
 
-func (c Vector) Length() int {
+func (c Vector) Size() int {
 	return len(c.Elements)
 }
 
@@ -56,45 +57,45 @@ func NewVectorFromElements(elements []Complex) *Vector {
 }
 
 func (c *Vector) Add(a, b Vector) {
-	if a.Length() != b.Length() {
+	if a.Size() != b.Size() {
 		panic("Invalid vector lengths")
 	}
 
-	c.Resize(a.Length())
+	c.Resize(a.Size())
 
-	for i := 0; i < a.Length(); i++ {
+	for i := 0; i < a.Size(); i++ {
 		c.Set(i, a.At(i)+b.At(i))
 	}
 }
 
 func (c *Vector) Sub(a, b Vector) {
-	if a.Length() != b.Length() {
+	if a.Size() != b.Size() {
 		panic("Invalid vector lengths")
 	}
 
-	c.Resize(a.Length())
+	c.Resize(a.Size())
 
-	for i := 0; i < a.Length(); i++ {
+	for i := 0; i < a.Size(); i++ {
 		c.Set(i, a.At(i)-b.At(i))
 	}
 }
 
 func (c *Vector) MulScalar(scalar Complex, v Vector) {
-	c.Resize(v.Length())
+	c.Resize(v.Size())
 
-	for i := 0; i < v.Length(); i++ {
+	for i := 0; i < v.Size(); i++ {
 		c.Set(i, scalar*v.At(i))
 	}
 }
 
 func (c *Vector) MulMatrix(v Vector, m Matrix) {
-	if v.Length() != m.Width {
+	if v.Size() != m.Width {
 		panic("Invalid dimensions")
 	}
 
-	c.Resize(v.Length())
+	c.Resize(v.Size())
 
-	for h := 0; h < c.Length(); h++ {
+	for h := 0; h < c.Size(); h++ {
 		sum := Complex(complex(0, 0))
 		for w := 0; w < m.Width; w++ {
 			sum += v.At(w) * m.At(w, h)
@@ -105,21 +106,21 @@ func (c *Vector) MulMatrix(v Vector, m Matrix) {
 }
 
 func (c *Vector) TensorProduct(a, b Vector) *Vector {
-	if a.Length() == 0 {
+	if a.Size() == 0 {
 		c.Elements = b.Elements[:]
 		return c
 	}
 
-	if b.Length() == 0 {
+	if b.Size() == 0 {
 		c.Elements = a.Elements[:]
 		return c
 	}
 
-	c.Resize(a.Length() * b.Length())
+	c.Resize(a.Size() * b.Size())
 
-	for ah := 0; ah < a.Length(); ah++ {
-		for bh := 0; bh < b.Length(); bh++ {
-			ch := ah*b.Length() + bh
+	for ah := 0; ah < a.Size(); ah++ {
+		for bh := 0; bh < b.Size(); bh++ {
+			ch := ah*b.Size() + bh
 
 			c.Set(ch, a.At(ah)*b.At(bh))
 		}
@@ -130,12 +131,30 @@ func (c *Vector) TensorProduct(a, b Vector) *Vector {
 
 func (c Vector) Matrix() *Matrix {
 	m := NewMatrix()
-	m.Resize(1, c.Length())
+	m.Resize(1, c.Size())
 
-	for i := 0; i < c.Length(); i++ {
+	for i := 0; i < c.Size(); i++ {
 		m.Set(0, i, c.At(i))
 	}
 	return m
+}
+
+func (c Vector) IsNormalized() bool {
+	return NearEqual(c.Norm(), 1.0)
+}
+
+func (c *Vector) Normalize() {
+	l := c.Length()
+	c.MulScalar(NewComplex(1/l, 0), *c)
+}
+
+func (c *Vector) Length() float64 {
+	sum := float64(0)
+	for _, e := range c.Elements {
+		sum += e.Modulus() * e.Modulus()
+	}
+
+	return math.Sqrt(sum)
 }
 
 func (c Vector) Norm() float64 {
@@ -143,6 +162,7 @@ func (c Vector) Norm() float64 {
 	bra := NewMatrix().Adjoint(*c.Matrix())
 	key := c.Matrix()
 
+	bra.Elements[0].Modulus()
 	innerProduct := bra.MulMatrix(*bra, *key)
 
 	if innerProduct.Width != 1 && innerProduct.Height != 1 {
@@ -162,11 +182,11 @@ func (c Vector) Probabilities() map[int]float64 {
 }
 
 func (c Vector) Measure() int {
-	norm := c.Norm()
+	c.Normalize()
 	guess := rand.Float64()
 
 	for i, e := range c.Elements {
-		guess -= (e.Modulus() * e.Modulus() / norm)
+		guess -= (e.Modulus() * e.Modulus())
 		if guess < 0 {
 			return i
 		}
@@ -176,7 +196,7 @@ func (c Vector) Measure() int {
 }
 
 func (c Vector) Equals(b Vector) bool {
-	if c.Length() != b.Length() {
+	if c.Size() != b.Size() {
 		return false
 	}
 
@@ -188,50 +208,60 @@ func (c Vector) Equals(b Vector) bool {
 	return true
 }
 
-func (c *Vector) MeasureQubit(index uint) int {
+func (c *Vector) MeasureQubit(index int) int {
 	norm := c.Norm()
 	guess := rand.Float64()
-
 	isOne := false
 
+	qubits := int(math.Log2(float64(len(c.Elements))))
+	// so, we have to reverse the qubit order, i'm not 100% sure why
+
+	// first determine if this qubit is collapsing to zero or one
 	for i, e := range c.Elements {
-		if i&(1<<index) == 0 {
-			// fmt.Println("CURIOYUS?")
+		// fmt.Println(i, qubits-1-index, i&(qubits-1-index), e.Modulus()*e.Modulus()/norm)
+		// fmt.Printf("|%02b> %s\n", i, e)
+
+		if i&(1<<(qubits-1-index)) == 0 {
 			continue
+		} else {
+			// fmt.Println("YAS")
 		}
 
 		guess -= (e.Modulus() * e.Modulus() / norm)
+
 		if guess < 0 {
 			isOne = true
+			break
 		}
 	}
 
-	for i, _ := range c.Elements {
-		if i&(1<<index) == 0 && isOne {
-			c.Elements[i] = NewComplex(0, 0)
-		} else if i&(1<<index) != 0 && !isOne {
-			c.Elements[i] = NewComplex(0, 0)
+	for i := range c.Elements {
 
+		// find all the zero elements and set them to zero
+		if isOne {
+			if i&(1<<(qubits-1-index)) == 0 {
+				c.Elements[i] = NewComplex(0, 0)
+			}
+		}
+
+		if !isOne {
+			if i&(1<<(qubits-1-index)) != 0 {
+				c.Elements[i] = NewComplex(0, 0)
+			}
 		}
 	}
 
-	norm = c.Norm()
-	for i, e := range c.Elements {
-		if e != NewComplex(0, 0) {
-			c.Elements[i] /= NewComplex(norm, 0)
-		}
-	}
+	c.Normalize()
 
 	if isOne {
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
 
 func (c Vector) PrintProbabilities() {
 	probs := c.Probabilities()
-	for i := 0; i < c.Length(); i++ {
+	for i := 0; i < c.Size(); i++ {
 		fmt.Printf("%2d %08b %.2f\n", i, i, probs[i])
 	}
 }

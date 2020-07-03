@@ -65,7 +65,7 @@ func RenderMoment(m Moment) []string {
 			// 	}
 
 		} else {
-			if m.HasConnectionAbove(q) {
+			if m.HasConnectionAbove(q) && (m.IsControlAt(q) || m.HasConnectionBelow(q)) {
 				connectedTop := strings.Repeat(" ", width/2) + Bar + strings.Repeat(" ", width/2)
 				out = append(out, " "+connectedTop+" ")
 			} else {
@@ -77,7 +77,7 @@ func RenderMoment(m Moment) []string {
 			} else {
 				out = append(out, strings.Repeat(Dash, width+2))
 			}
-			if m.HasConnectionBelow(q) {
+			if m.HasConnectionBelow(q) && (m.IsControlAt(q) || m.HasConnectionAbove(q)) {
 				connectedBottom := strings.Repeat(" ", width/2) + Bar + strings.Repeat(" ", width/2)
 				out = append(out, " "+connectedBottom+" ")
 			} else {
@@ -90,6 +90,7 @@ func RenderMoment(m Moment) []string {
 
 func JoinBuffers(a, b []string) []string {
 	if len(a) != len(b) {
+		fmt.Println(len(a), len(b))
 		panic("mis-matching lengths")
 	}
 
@@ -113,4 +114,21 @@ func RenderMoments(moments []Moment) []string {
 func DrawMoments(moments []Moment) {
 	buf := RenderMoments(moments)
 	fmt.Println(strings.Join(buf, "\n"))
+}
+
+func RenderInitialState(s []int) []string {
+	out := []string{}
+	for _, a := range s {
+		out = append(out, "    ")
+		out = append(out, fmt.Sprintf("|%d>─", a))
+		out = append(out, "    ")
+	}
+	return out
+}
+
+func DrawCircuit(c Circuit) {
+	initial := RenderInitialState(c.InitialState)
+	moments := RenderMoments(c.Moments)
+	out := JoinBuffers(initial, moments)
+	fmt.Println(strings.Join(out, "\n"))
 }

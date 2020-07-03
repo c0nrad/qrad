@@ -112,7 +112,7 @@ func TestVectorTensorProduct(t *testing.T) {
 	g := NewVector()
 	g.TensorProduct(*a, *b)
 
-	for h := 0; h < g.Length(); h++ {
+	for h := 0; h < g.Size(); h++ {
 		if !s.At(h).Equals(g.At(h)) {
 			t.Error("Failed to take tensor product")
 		}
@@ -166,7 +166,8 @@ func TestVectorBitMeasure(t *testing.T) {
 
 	for i := 0; i < 1; i++ {
 		q := NewCircuit([]int{0, 0, 0})
-		q.ApplyGate(ExtendGateFill([]int{0, 1, 2}, 3, HadamardGate))
+		q.Append(H, []int{0, 1, 2})
+		q.Execute()
 
 		// q.State.PrintProbabilities()
 		results[q.State.MeasureQubit(0)]++
