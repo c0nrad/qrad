@@ -16,4 +16,6 @@ Using this Bob is able to decode the message.
 
 ### Running
 
+```
 go run superdense.go
+```
