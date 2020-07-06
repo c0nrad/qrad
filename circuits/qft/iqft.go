@@ -15,7 +15,7 @@ import (
 	"github.com/mum4k/termdash/linestyle"
 	"github.com/mum4k/termdash/terminal/termbox"
 	"github.com/mum4k/termdash/terminal/terminalapi"
-	"github.com/mum4k/termdash/widgets/sparkline"
+	"github.com/mum4k/termdash/widgets/barchart"
 	"github.com/mum4k/termdash/widgets/text"
 )
 
@@ -28,8 +28,8 @@ type Display struct {
 
 	ParentContainer *container.Container
 	CircuitText     *text.Text
-	AmplitudeSpark  *sparkline.SparkLine
-	PhaseSpark      *sparkline.SparkLine
+	AmplitudeChart  *barchart.BarChart
+	PhaseChart      *barchart.BarChart
 
 	LoggerText *text.Text
 }
@@ -48,12 +48,12 @@ func (d *Display) InitTerminal() {
 		panic(err)
 	}
 
-	d.AmplitudeSpark, err = sparkline.New()
+	d.AmplitudeChart, err = barchart.New(barchart.Labels(d.GenerateLabels()), barchart.LabelColors(d.GenerateLabelColors()))
 	if err != nil {
 		panic(err)
 	}
 
-	d.PhaseSpark, err = sparkline.New()
+	d.PhaseChart, err = barchart.New(barchart.Labels(d.GenerateLabels()), barchart.LabelColors(d.GenerateLabelColors()))
 	if err != nil {
 		panic(err)
 	}
@@ -67,11 +67,14 @@ func (d *Display) InitTerminal() {
 		d.Terminal,
 		container.Border(linestyle.Light),
 		container.BorderTitle("Inverse Quantum Fourier Transform"),
+		container.FocusedColor(cell.ColorCyan),
+		// container.BorderColor(cell.ColorNumber(8)),
 		container.SplitHorizontal(
 			container.Top(
 				container.Border(linestyle.Light),
 				container.BorderTitle("Circuit"),
 				container.PlaceWidget(d.CircuitText),
+				// container.BorderColor(cell.ColorYellow),
 				// container.AlignHorizontal(align.HorizontalCenter),
 				container.AlignVertical(align.VerticalMiddle),
 			),
@@ -80,10 +83,10 @@ func (d *Display) InitTerminal() {
 					container.Left(
 						container.SplitHorizontal(
 							container.Top(
-								container.PlaceWidget(d.AmplitudeSpark),
+								container.PlaceWidget(d.AmplitudeChart),
 							),
 							container.Bottom(
-								container.PlaceWidget(d.PhaseSpark),
+								container.PlaceWidget(d.PhaseChart),
 							),
 						),
 
@@ -92,10 +95,12 @@ func (d *Display) InitTerminal() {
 					),
 					container.Right(
 						container.PlaceWidget(d.LoggerText),
+						container.BorderTitle("Logger"),
+						container.Border(linestyle.Light),
 					),
 				),
 			),
-			container.SplitPercent(75),
+			container.SplitPercent(60),
 		),
 	)
 }
@@ -117,8 +122,13 @@ func (d *Display) DrawCircuit() {
 
 	state := qrad.RenderInitialState(d.Circuit.InitialState)
 	before := qrad.RenderMoments(d.Circuit.Moments[0:d.Circuit.MomentExecutionIndex])
-	current := qrad.RenderMoment(d.Circuit.Moments[d.Circuit.MomentExecutionIndex])
-	after := qrad.RenderMoments(d.Circuit.Moments[d.Circuit.MomentExecutionIndex+1:])
+
+	current := []string{}
+	after := []string{}
+	if len(d.Circuit.Moments) != d.Circuit.MomentExecutionIndex {
+		current = qrad.RenderMoment(d.Circuit.Moments[d.Circuit.MomentExecutionIndex])
+		after = qrad.RenderMoments(d.Circuit.Moments[d.Circuit.MomentExecutionIndex+1:])
+	}
 
 	for i := 0; i < len(state); i++ {
 		if d.CircuitText.Write(state[i]) != nil {
@@ -126,13 +136,15 @@ func (d *Display) DrawCircuit() {
 		}
 
 		if len(before) != 0 {
-			if d.CircuitText.Write(before[i]) != nil {
+			if d.CircuitText.Write(before[i], text.WriteCellOpts(cell.FgColor(cell.ColorNumber(8)))) != nil {
 				panic("dunno")
 			}
 		}
 
-		if d.CircuitText.Write(current[i], text.WriteCellOpts(cell.FgColor(cell.ColorBlue))) != nil {
-			panic("err")
+		if len(current) != 0 {
+			if d.CircuitText.Write(current[i], text.WriteCellOpts(cell.FgColor(cell.ColorBlue))) != nil {
+				panic("err")
+			}
 		}
 
 		if len(after) != 0 {
@@ -147,48 +159,86 @@ func (d *Display) DrawCircuit() {
 	}
 }
 
+func (d *Display) GenerateLabels() []string {
+	out := []string{}
+	for i := range d.Circuit.State.Elements {
+		out = append(out, fmt.Sprintf("%d", i))
+	}
+	return out
+}
+
+func (d *Display) GenerateLabelColors() []cell.Color {
+	out := []cell.Color{}
+	for _ = range d.Circuit.State.Elements {
+		out = append(out, cell.ColorGreen)
+	}
+	return out
+}
+
 func (d *Display) DrawAmplitudeSparkline() {
 	out := []int{}
 
-	capacity := d.AmplitudeSpark.ValueCapacity()
+	capacity := d.AmplitudeChart.ValueCapacity()
 	if capacity == 0 {
-		d.AmplitudeSpark.Add([]int{0})
+		d.AmplitudeChart.Values([]int{0}, 100)
 		return
 	}
 
-	for _, e := range d.Circuit.State.Elements {
+	for i := range d.Circuit.State.Elements {
+		reversed := qrad.ReverseEndianness(i, d.Circuit.Qubits)
+		e := d.Circuit.State.Elements[reversed]
 		out = append(out, int(e.Modulus()*100))
-		// out = append(out, i)
+
 	}
 
-	for len(out) < capacity {
-		out = append(out, 0)
-	}
+	// for len(out) < capacity {
+	// 	out = append(out, 0)
+	// }
 
-	d.AmplitudeSpark.Add(out)
+	d.AmplitudeChart.Values(out, 100)
 }
 
 func (d *Display) DrawPhaseSparkline() {
 	out := []int{}
 
-	capacity := d.PhaseSpark.ValueCapacity()
+	capacity := d.PhaseChart.ValueCapacity()
 	if capacity == 0 {
-		d.PhaseSpark.Add([]int{0})
+		d.PhaseChart.Values([]int{0}, 100)
 		return
 	}
 
-	for _, e := range d.Circuit.State.Elements {
+	for i := range d.Circuit.State.Elements {
+		reversed := qrad.ReverseEndianness(i, d.Circuit.Qubits)
+		e := d.Circuit.State.Elements[reversed]
 		_, angle := cmplx.Polar(complex128(e))
 		height := (int((angle/(math.Pi))*100) + 100) % 100
 		out = append(out, height)
-		d.LoggerText.Write(fmt.Sprintf("%d\n", height))
 	}
 
-	for len(out) < capacity {
-		out = append(out, 0)
+	// for len(out) < capacity {
+	// 	out = append(out, 0)
+	// }
+
+	d.PhaseChart.Values(out, 100)
+}
+
+func (d *Display) UpdateLogger() {
+	if d.Circuit.MomentExecutionIndex == 0 {
+		d.LoggerText.Write(" Putting 4 qubits into equal superpositions\n")
 	}
 
-	d.PhaseSpark.Add(out)
+	if d.Circuit.MomentExecutionIndex == 1 {
+		d.LoggerText.Write(" Applying rotations to qubits at phase 13\n")
+	}
+
+	if d.Circuit.MomentExecutionIndex == 6 {
+		d.LoggerText.Write(" Performing Quantum Fourier Transform Inverse\n")
+	}
+
+	if d.Circuit.MomentExecutionIndex == 18 {
+		d.LoggerText.Write(" Measured 13, fourier transform worked!\n")
+	}
+
 }
 
 func BuildCircuit() *qrad.Circuit {
@@ -210,10 +260,14 @@ func BuildCircuit() *qrad.Circuit {
 	c := qrad.NewCircuit([]int{0, 0, 0, 0})
 	c.Append(qrad.H, []int{0, 1, 2, 3})
 
-	c.Append(qrad.ROT(13*math.Pi/8, "13PI/8"), []int{0})
-	c.Append(qrad.ROT(13*math.Pi/4, "13PI/4"), []int{1})
-	c.Append(qrad.ROT(13*math.Pi/2, "13PI/2"), []int{2})
-	c.Append(qrad.ROT(13*math.Pi, "13PI"), []int{3})
+	v := float64(13)
+
+	c.Append(qrad.ROT(v*math.Pi/8, "13PI/8"), []int{0})
+	c.Append(qrad.ROT(v*math.Pi/4, "13PI/4"), []int{1})
+	c.Append(qrad.ROT(v*math.Pi/2, "13PI/2"), []int{2})
+	c.Append(qrad.ROT(v*math.Pi, "13PI"), []int{3})
+
+	c.AppendBarrier()
 
 	qrad.ApplyInverseQFT(c, 0, 3)
 
@@ -235,9 +289,11 @@ func main() {
 				d.DrawAmplitudeSparkline()
 				d.DrawPhaseSparkline()
 				d.DrawCircuit()
+				d.UpdateLogger()
 
-				if d.Circuit.MomentExecutionIndex == len(d.Circuit.Moments)-1 {
-					d.Circuit.Reset()
+				if d.Circuit.MomentExecutionIndex == len(d.Circuit.Moments) {
+					ticker.Stop()
+
 				} else {
 					d.Circuit.Step()
 				}
