@@ -213,7 +213,7 @@ func (a Matrix) PPrint() {
 			fmt.Print(" ")
 		}
 		for w := 0; w < a.Width; w++ {
-			fmt.Printf("%.01f ", real(a.At(w, h)))
+			fmt.Printf("%.01f + %.01fj, ", real(a.At(w, h)), imag(a.At(w, h)))
 
 		}
 		fmt.Print("]")

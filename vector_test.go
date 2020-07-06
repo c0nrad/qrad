@@ -176,3 +176,18 @@ func TestVectorBitMeasure(t *testing.T) {
 	// fmt.Println(results)
 
 }
+
+func TestReverseEndianness(t *testing.T) {
+	if ReverseEndianness(5, 4) != 10 {
+		t.Error("failed to reverse endianness")
+	}
+
+	if ReverseEndianness(10, 4) != 5 {
+		t.Error("Failed to reverse endianness", ReverseEndianness(10, 4))
+	}
+
+	if ReverseEndianness(13, 4) != 11 {
+		t.Error("Failed to reverse endianness")
+	}
+
+}

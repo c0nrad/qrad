@@ -25,8 +25,8 @@ func TestCircuitHadamardSimple(t *testing.T) {
 		}
 
 		out := c.Measure()
-		if out != 0 && out != 2 {
-			t.Error("failed to construct bell state")
+		if out != 0 && out != 1 {
+			t.Error("failed to construct bell state", c.Measure())
 		}
 	}
 }
@@ -35,7 +35,7 @@ func TestInitialState(t *testing.T) {
 	c := NewCircuit([]int{0, 0, 1})
 	c.Append(I, []int{0})
 	c.Execute()
-	if c.Measure() != 1 {
+	if c.Measure() != 4 {
 		t.Error("circuit is reversed", c.Measure())
 	}
 }
@@ -93,7 +93,7 @@ func TestCCINOT(t *testing.T) {
 
 	c.Execute()
 
-	if c.Measure() != 13 {
+	if c.Measure() != 11 {
 		t.Error("failed to apply CCNOT")
 	}
 }
@@ -395,13 +395,11 @@ func TestMeasureSingleQubit(t *testing.T) {
 		c.AppendControl(X, []int{0}, 1)
 		c.Execute()
 
-		c.Draw()
-		c.PrintStates()
+		// c.Draw()
+		// c.PrintStates()
 
 		out1 := c.MeasureQubit(0)
 		out2 := c.MeasureQubit(1)
-
-		c.PrintStates()
 
 		if out1 != out2 {
 			t.Error("qubits should match")
@@ -453,18 +451,41 @@ func TestOffsetHadamard(t *testing.T) {
 	// 	t.Error("measured non-zero qubit", c.MeasureQubit(0))
 	// }
 	c.Execute()
-	c.Draw()
-	c.PrintStates()
+	// c.Draw()
+	// c.PrintStates()
 
 	c.AppendControl(X, []int{1}, 2)
 
 	c.Execute()
-	c.Draw()
-	c.PrintStates()
+	// c.Draw()
+	// c.PrintStates()
 
 	if c.MeasureQubit(0) != 0 {
 		t.Error("measured non-zero qubit", c.MeasureQubit(0))
 	}
 
 	// }
+}
+
+func TestCircuitMeasure(t *testing.T) {
+	c := NewCircuit([]int{0, 1, 0, 1})
+	c.Append(I, []int{0})
+	c.Execute()
+
+	if c.Measure() != 10 {
+		t.Error("failed to measure qubit")
+	}
+
+	c2 := NewCircuit([]int{1, 0, 1, 1})
+	c2.Append(I, []int{0})
+	c2.Execute()
+
+	if c2.Measure() != 13 {
+		t.Error("failed to measure qubit", c2.Measure(), c2.MeasureEach())
+	}
+
+	if c2.Measure() != 13 {
+		t.Error("failed to measure qubit")
+	}
+
 }

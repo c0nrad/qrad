@@ -68,7 +68,7 @@ func main() {
 		c.Draw()
 		c.Execute()
 
-		if c.Measure() != m {
+		if qrad.ReverseEndianness(c.Measure(), 2) != m {
 			panic("Failed to encode information")
 		}
 

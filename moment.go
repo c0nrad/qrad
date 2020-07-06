@@ -10,7 +10,8 @@ type Moment struct {
 	Indexes  []int
 	Controls []int
 
-	Size int
+	Size      int
+	IsBarrier bool
 }
 
 func NewMoment(size int, gate Gate, index int) Moment {
@@ -26,6 +27,11 @@ func NewMomentMultiple(size int, gate Gate, indexes []int) Moment {
 	m.Gate = gate
 	m.Size = size
 	m.Indexes = indexes
+
+	if gate.Operands() > 1 && len(indexes) > 1 {
+		panic("only one large gate per moment")
+	}
+
 	return m
 }
 
@@ -45,7 +51,7 @@ func (m Moment) Draw() {
 
 func (m Moment) IsGateAt(i int) bool {
 	for _, t := range m.Indexes {
-		if t == i {
+		if t == i || t+m.Gate.Operands()-1 == i {
 			return true
 		}
 	}
@@ -68,47 +74,43 @@ func (m Moment) Verify() {
 }
 
 func (m Moment) HasConnectionAbove(i int) bool {
-	if i == 0 {
-		return false
-	}
 
-	if len(m.Controls) == 0 {
-		return false
-	}
-
-	for _, g := range m.Controls {
-		if g < i {
-			return true
+	existBelow := false
+	// does there exist something below i?
+	for g := i; g < m.Size; g++ {
+		if m.IsGateAt(g) || m.IsControlAt(g) {
+			existBelow = true
 		}
 	}
 
-	for _, g := range m.Indexes {
-		if g < i {
-			return true
+	existAbove := false
+	for g := 0; g < i; g++ {
+		if m.IsGateAt(g) || m.IsControlAt(g) {
+			existAbove = true
 		}
 	}
 
-	return false
+	return existBelow && existAbove
 }
 
 func (m Moment) HasConnectionBelow(i int) bool {
-	if len(m.Controls) == 0 {
-		return false
-	}
 
-	for _, g := range m.Controls {
-		if g > i {
-			return true
+	existAbove := false
+	for g := 0; g <= i; g++ {
+		if m.IsGateAt(g) || m.IsControlAt(g) {
+			existAbove = true
 		}
 	}
 
-	for _, g := range m.Indexes {
-		if g > i {
-			return true
+	existBelow := false
+	// does there exist something below i?
+	for g := i + 1; g < m.Size; g++ {
+		if m.IsGateAt(g) || m.IsControlAt(g) {
+			existBelow = true
 		}
 	}
 
-	return false
+	return existBelow && existAbove
 }
 
 func (m Moment) Matrix() Matrix {
@@ -135,15 +137,22 @@ func ConstructMomentMatrix(moment Moment) Matrix {
 
 	gates := []Gate{}
 
+	// if moment.Gate.Symbol == "SWAP" {
+	// 	return ConstructSwapMomentMatrix(moment)
+	// }
+
 	for i := 0; i < moment.Size; i++ {
 		if moment.IsGateAt(i) {
 			gates = append(gates, moment.Gate)
+			i += (moment.Gate.Operands() - 1)
 		} else if moment.IsControlAt(i) {
 			gates = append(gates, Gate{Matrix: *NewMatrix(), Symbol: "C"})
 		} else {
 			gates = append(gates, I)
 		}
 	}
+
+	// fmt.Println("gates", gates)
 
 	for len(gates) != 1 {
 		hasControl := false
@@ -179,7 +188,7 @@ func ConstructMomentMatrix(moment Moment) Matrix {
 
 			}
 
-			fmt.Println(gateIndex, otherIndex, gates[gateIndex].Symbol, gates[otherIndex].Symbol)
+			// fmt.Println(gateIndex, otherIndex, gates[gateIndex].Symbol, gates[otherIndex].Symbol)
 
 			var merged Gate
 			if gates[otherIndex].IsControl() {
@@ -209,4 +218,49 @@ func ConstructMomentMatrix(moment Moment) Matrix {
 
 func (m Moment) String() string {
 	return fmt.Sprintf("Moment{G: %s, Index: %d, Control: %d", m.Gate.Symbol, m.Indexes, m.Controls)
+}
+
+func ExtendControlGate(cIndex, gIndex, total int, gate Gate) Gate {
+	// fmt.Println("ExtendControlGate", cIndex, gIndex, total, gate)
+	zero := NewMatrixFromElements([][]Complex{
+		{Complex(complex(1, 0)), Complex(complex(0, 0))}})
+	zerot := NewMatrix().Transpose(*zero)
+
+	one := NewMatrixFromElements([][]Complex{
+		{Complex(complex(0, 0)), Complex(complex(1, 0))}})
+	onet := NewMatrix().Transpose(*one)
+
+	zeroMatrix := NewMatrix().TensorProduct(*zero, *zerot)
+	oneMatrix := NewMatrix().TensorProduct(*one, *onet)
+
+	identityMatrix := ConstructNIdentity(gate.Operands())
+
+	outControl := NewMatrix()
+	outGate := NewMatrix()
+	for i := 0; i < total; i++ {
+		if i == cIndex {
+			outControl.TensorProduct(*outControl, *zeroMatrix)
+		} else {
+			outControl.TensorProduct(*outControl, identityMatrix.Matrix)
+		}
+
+		if i == cIndex {
+			outGate.TensorProduct(*outGate, *oneMatrix)
+		} else if i == gIndex {
+			outGate.TensorProduct(*outGate, gate.Matrix)
+		} else {
+			outGate.TensorProduct(*outGate, identityMatrix.Matrix)
+		}
+	}
+
+	// fmt.Println("After ExtenControlGate")
+	// outControl.PPrint()
+	// outGate.PPrint()
+
+	outControl.Add(*outControl, *outGate)
+	return Gate{Matrix: *outControl, Symbol: "C" + gate.Symbol}
+}
+
+func ConstructSwapMomentMatrix(moment Moment) Matrix {
+	return SWAP(2).Matrix
 }

@@ -15,6 +15,10 @@ type Vector struct {
 	Elements []Complex
 }
 
+func (v Vector) Log2Size() int {
+	return int(math.Log2(float64(len(v.Elements))))
+}
+
 func (c Vector) At(i int) Complex {
 	if i > len(c.Elements) {
 		panic("Invalid offset")
@@ -188,7 +192,9 @@ func (c Vector) Measure() int {
 	for i, e := range c.Elements {
 		guess -= (e.Modulus() * e.Modulus())
 		if guess < 0 {
-			return i
+
+			return ReverseEndianness(i, c.Log2Size())
+
 		}
 	}
 	// There's like a super super super super small chance of this happening...
@@ -280,4 +286,16 @@ func (c Vector) PrintChance(bits, total int) {
 	for i := 0; i < 1<<uint(bits); i++ {
 		// fmt.Printf("%04b %.02f\n", i, chances[i])
 	}
+}
+
+func ReverseEndianness(a, bits int) int {
+	out := 0
+	for i := 0; i < bits; i++ {
+		out <<= 1
+		if a&1 == 1 {
+			out++
+		}
+		a >>= 1
+	}
+	return out
 }

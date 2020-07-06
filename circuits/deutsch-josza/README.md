@@ -17,5 +17,5 @@ One of the books mentioned that the line of Hadamards is akin to a simple quantu
 ### Running the program
 
 ```
-go run deutch-josza.go
+go run deutsch-josza.go
 ```
