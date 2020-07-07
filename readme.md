@@ -1,4 +1,4 @@
-# qrad Quantum Simulator
+# qrad Quantum Computing Simulator
 
 qrad is a quantum simulator heavily based on [Quantum Computing for Computer Scientist](https://www.amazon.com/Quantum-Computing-Computer-Scientists-Yanofsky/dp/0521879965/), [Quantum Computing for the Determined](https://www.youtube.com/watch?v=X2q1PuI2RFI&list=PL1826E60FD05B44E4), with inspiration from [quirk](https://algassert.com/quirk), [qiskit](https://qiskit.org/), and [cirq](https://github.com/quantumlib/Cirq).
 
