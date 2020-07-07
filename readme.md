@@ -36,6 +36,11 @@ if c.Measure() != 13 {
 }
 ```
 
+## Blog Posts
+
+* [Quantum Teleportation](https://blog.c0nrad.io/posts/quantum-teleportation/)
+* [Quantum Fourier Transform](https://blog.c0nrad.io/posts/qft/)
+
 ### License
 
 Copyright 2020 Stuart Larsen
