@@ -2,3 +2,7 @@ Moment Barriers
 Large gates draw
 Fancy Charts?
 Measure gate (and results)
+
+Construct arbitrary logic gates by function sampling
+
+Using quantum algorithms to build quantum algorithms
