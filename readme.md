@@ -13,6 +13,7 @@ It doesn't do anything particularly unique/special. It's just a tool for me to l
 * [Teleportation](/circuits/teleportation): Move the state of a qubit to another qubit (destroying the original qubit in the process)
 * [Deutsch-Josza](/circuits/deutsch-josza): Determine if a blackbox function is balanced/constant
 * [Quantum Fourier Transform](/circuits/qft): Take the QFT/iQFT of some qubits with a neat interface
+* [Shor's Algorithm](/circuits/shor): A specific case of shor's for factoring 15 with co-prime 2.
 
 ### Example
 
@@ -40,6 +41,7 @@ if c.Measure() != 13 {
 
 * [Quantum Teleportation](https://blog.c0nrad.io/posts/quantum-teleportation/)
 * [Quantum Fourier Transform](https://blog.c0nrad.io/posts/qft/)
+* [Shor's Algorithm](https://blog.c0nrad.io/posts/shors)
 
 ### License
 

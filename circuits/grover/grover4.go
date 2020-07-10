@@ -1,4 +1,4 @@
-package qrad
+package main
 
 // func f4(q *Circuit) {
 // 	// (a & b) & (!c & d)

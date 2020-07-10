@@ -75,6 +75,10 @@ func (m Moment) Verify() {
 
 func (m Moment) HasConnectionAbove(i int) bool {
 
+	if len(m.Controls) == 0 && m.Gate.IsBoxed {
+		return false
+	}
+
 	existBelow := false
 	// does there exist something below i?
 	for g := i; g < m.Size; g++ {
@@ -94,6 +98,10 @@ func (m Moment) HasConnectionAbove(i int) bool {
 }
 
 func (m Moment) HasConnectionBelow(i int) bool {
+
+	if len(m.Controls) == 0 && m.Gate.IsBoxed {
+		return false
+	}
 
 	existAbove := false
 	for g := 0; g <= i; g++ {

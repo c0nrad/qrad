@@ -4,10 +4,41 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+
+	"github.com/c0nrad/qrad"
 )
 
 func main() {
+	a := 2
+	N := 15
 
+	c := qrad.NewCircuit([]int{1, 0, 0, 0, 0, 0, 0, 0})
+	c.Append(qrad.H, []int{4, 5, 6, 7})
+	c.AppendControl(qrad.SWAP(0), []int{4}, 2)
+	c.AppendControl(qrad.SWAP(0), []int{4}, 1)
+	c.AppendControl(qrad.SWAP(0), []int{4}, 0)
+
+	c.AppendControl(qrad.SWAP(1), []int{5}, 1)
+	c.AppendControl(qrad.SWAP(1), []int{5}, 0)
+
+	qrad.ApplyQFT(c, 4, 7)
+
+	c.Draw()
+	c.Execute()
+	r := c.MeasureRange(4, 7)
+	fmt.Println("Measured a period of ")
+
+	if aXmodn(a, r/2, N) == (-1+N)%N {
+		fmt.Println("Bummer they were congruent")
+	} else {
+		fmt.Println("cool, they are not congruent", aXmodn(r, a, N), N-1%N)
+	}
+
+	fmt.Println("We found the following factors")
+	fmt.Println(FindFactor(r, a, N))
+}
+
+func ClassicalShor() {
 	N := 35
 
 	fmt.Println("We are trying to factor:", N)
